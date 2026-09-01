@@ -3,14 +3,19 @@ import { MapPin, Activity, AlertTriangle, Wind, ShieldCheck, Stethoscope, Users,
 import { apiRequest } from '../utils/api';
 
 export default function AreaHealthDashboard() {
-  const [selectedArea, setSelectedArea] = useState('South Delhi');
+  const [selectedArea, setSelectedArea] = useState('Civil Lines (Jhansi)');
   const [areaData, setAreaData] = useState(null);
-  const [availableAreas, setAvailableAreas] = useState(['South Delhi', 'South East Delhi', 'Central Delhi']);
+  const [availableAreas, setAvailableAreas] = useState([
+    'Civil Lines (Jhansi)',
+    'Medical College Zone (Jhansi)',
+    'SIPRI Bazar (Jhansi)',
+    'Gwalior Road (Jhansi)'
+  ]);
   const [loading, setLoading] = useState(true);
 
   const fetchAreaStats = async (areaName) => {
     setLoading(true);
-    const res = await apiRequest(`/city/area-stats?area=${areaName}`);
+    const res = await apiRequest(`/city/area-stats?area=${encodeURIComponent(areaName)}`);
     if (res.success) {
       setAreaData(res.area);
       if (res.availableAreas) setAvailableAreas(res.availableAreas);
@@ -30,18 +35,18 @@ export default function AreaHealthDashboard() {
           <div>
             <div className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-teal-500/10 text-teal-300 border border-teal-500/30 text-xs font-semibold mb-2">
               <MapPin className="w-3.5 h-3.5 text-teal-400" />
-              <span>Locality Health Intelligence</span>
+              <span>Jhansi Locality Health Intelligence</span>
             </div>
             <h2 className="text-xl font-bold font-heading text-white">
-              Area Health Statistics & Active Epidemic Trends
+              Area Health Statistics & Active Disease Trends (Jhansi, UP)
             </h2>
             <p className="text-xs text-slate-400">
-              Check real-time hospital capacity, active disease trends, pollution impact, and OPD wait times in your living locality or target area.
+              Real-time hospital capacity, active disease trends, air quality index (AQI), and OPD wait times across living localities in Jhansi, Uttar Pradesh.
             </p>
           </div>
 
           <div className="flex items-center space-x-2">
-            <span className="text-xs text-slate-300 font-semibold">Select Area:</span>
+            <span className="text-xs text-slate-300 font-semibold">Select Jhansi Locality:</span>
             <select
               value={selectedArea}
               onChange={(e) => setSelectedArea(e.target.value)}
@@ -55,7 +60,7 @@ export default function AreaHealthDashboard() {
         </div>
 
         {loading || !areaData ? (
-          <div className="p-8 text-center text-slate-400 text-sm">Loading Locality Statistics...</div>
+          <div className="p-8 text-center text-slate-400 text-sm">Loading Locality Statistics for Jhansi...</div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="p-4 rounded-xl bg-darkbg border border-darkborder">
@@ -73,13 +78,13 @@ export default function AreaHealthDashboard() {
             <div className="p-4 rounded-xl bg-darkbg border border-darkborder">
               <span className="text-xs text-slate-400 font-semibold">Locality AQI Index</span>
               <div className="text-2xl font-bold text-cyan-300 mt-1">{areaData.aqiLevel} AQI</div>
-              <p className="text-[11px] text-cyan-400/80 font-medium">Poor Air Quality Alert</p>
+              <p className="text-[11px] text-emerald-400/80 font-medium">Moderate Air Quality</p>
             </div>
 
             <div className="p-4 rounded-xl bg-darkbg border border-darkborder">
               <span className="text-xs text-slate-400 font-semibold">Avg OPD Wait Time</span>
               <div className="text-2xl font-bold text-teal-400 mt-1">~{areaData.avgOpdWaitTimeMins} Mins</div>
-              <p className="text-[11px] text-slate-500">Across local clinics & hospitals</p>
+              <p className="text-[11px] text-slate-500">Across local hospitals in Jhansi</p>
             </div>
           </div>
         )}

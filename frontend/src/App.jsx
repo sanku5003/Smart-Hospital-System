@@ -76,7 +76,7 @@ export default function App() {
       {/* Global Footer */}
       <footer className="bg-darkcard border-t border-darkborder py-4 mt-8">
         <div className="max-w-7xl mx-auto px-4 text-center text-xs text-slate-500">
-          <p>© 2026 MedPulse CityNet — Role-Based Smart Hospital & Locality Intelligence Infrastructure</p>
+          <p>© 2026 MedPulse Jhansi — Smart Hospital Queue & Resource Infrastructure (Jhansi, Uttar Pradesh)</p>
         </div>
       </footer>
 

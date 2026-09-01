@@ -9,11 +9,9 @@ async function getHospitalData(req, res) {
     let hospital = await Hospital.findOne({ hospitalId });
 
     if (!hospital) {
-      // Seed initial mock hospital if missing
       hospital = await seedHospital(hospitalId);
     }
 
-    // Fetch active tokens for load balancing calculation
     const activeTokens = await Token.find({ hospitalId, status: { $in: ['WAITING', 'IN_CONSULTATION'] } });
 
     res.json({ success: true, hospital, activeTokensCount: activeTokens.length });
@@ -43,7 +41,6 @@ async function updateBedStatus(req, res) {
     hospital.lastUpdated = new Date();
     await hospital.save();
 
-    // Broadcast real-time update via Socket.IO
     if (req.io) {
       req.io.emit('hospital-updated', { hospitalId, hospital });
       req.io.emit('city-beds-updated', { hospitalId, beds: hospital.beds });
@@ -62,7 +59,6 @@ async function getDoctorLoadBalancing(req, res) {
     const hospital = await Hospital.findOne({ hospitalId });
     if (!hospital) return res.status(404).json({ success: false, message: 'Hospital not found' });
 
-    // Calculate queue length per doctor/counter
     const waitingTokens = await Token.find({ hospitalId, status: 'WAITING' });
     
     const doctorStats = hospital.doctors.map(doc => {
@@ -103,7 +99,6 @@ async function bookDiagnosticScan(req, res) {
     hospital.lastUpdated = new Date();
     await hospital.save();
 
-    // Update token status if token number supplied
     if (tokenNumber) {
       await Token.findOneAndUpdate({ tokenNumber }, { status: 'DIAGNOSTIC_PENDING' });
     }
@@ -170,20 +165,20 @@ async function toggleDisasterMode(req, res) {
   }
 }
 
-// Helper to seed initial hospital data
+// Helper to seed initial hospital data for Jhansi, UP
 async function seedHospital(hospitalId = 'HOSP-001') {
   const seed = new Hospital({
     hospitalId,
-    name: 'AIIMS Central Super-Specialty Hospital',
-    address: 'Sri Aurobindo Marg, Ansari Nagar, New Delhi',
-    city: 'Delhi',
-    lat: 28.5672,
-    lng: 77.2100,
-    phone: '+91 11 2658 8500',
+    name: 'MLB Medical College & Super-Specialty Hospital, Jhansi',
+    address: 'Kanpur-Gwalior Bypass Road, Jhansi, Uttar Pradesh 284128',
+    city: 'Jhansi',
+    lat: 25.4385,
+    lng: 78.5833,
+    phone: '+91 510 232 0808',
     beds: [
-      { bedNumber: 'ICU-01', category: 'ICU', status: 'OCCUPIED', patientName: 'Ramesh Kumar', estimatedDischargeTime: new Date(Date.now() + 3600000) },
+      { bedNumber: 'ICU-01', category: 'ICU', status: 'OCCUPIED', patientName: 'Ramesh Bundela', estimatedDischargeTime: new Date(Date.now() + 3600000) },
       { bedNumber: 'ICU-02', category: 'ICU', status: 'AVAILABLE' },
-      { bedNumber: 'ICU-03', category: 'ICU', status: 'OCCUPIED', patientName: 'Sunita Sharma' },
+      { bedNumber: 'ICU-03', category: 'ICU', status: 'OCCUPIED', patientName: 'Sunita Yadav' },
       { bedNumber: 'ICU-04', category: 'ICU', status: 'AVAILABLE' },
       { bedNumber: 'VENT-01', category: 'VENTILATOR', status: 'OCCUPIED', patientName: 'Amit Verma' },
       { bedNumber: 'VENT-02', category: 'VENTILATOR', status: 'AVAILABLE' },
@@ -197,15 +192,15 @@ async function seedHospital(hospitalId = 'HOSP-001') {
       { bedNumber: 'GEN-105', category: 'GENERAL', status: 'AVAILABLE' }
     ],
     doctors: [
-      { name: 'Dr. V. K. Paul', department: 'Emergency', counter: 'Counter 1', activePatients: 4, status: 'AVAILABLE' },
-      { name: 'Dr. Randeep Guleria', department: 'Pulmonology', counter: 'Counter 2', activePatients: 6, status: 'AVAILABLE' },
-      { name: 'Dr. Naresh Trehan', department: 'Cardiology', counter: 'Counter 3', activePatients: 3, status: 'AVAILABLE' },
-      { name: 'Dr. Ashok Rajgopal', department: 'Orthopedics', counter: 'Counter 4', activePatients: 2, status: 'AVAILABLE' },
-      { name: 'Dr. S. K. Sarin', department: 'General OPD', counter: 'Counter 5', activePatients: 8, status: 'AVAILABLE' }
+      { name: 'Dr. N. S. Sengar', department: 'Emergency', counter: 'Emergency Desk 1', activePatients: 3, status: 'AVAILABLE' },
+      { name: 'Dr. R. K. Niranjan', department: 'Pulmonology', counter: 'Counter 2', activePatients: 4, status: 'AVAILABLE' },
+      { name: 'Dr. Prashant Gupta', department: 'Cardiology', counter: 'Counter 3', activePatients: 2, status: 'AVAILABLE' },
+      { name: 'Dr. P. K. Jain', department: 'Orthopedics', counter: 'Counter 4', activePatients: 3, status: 'AVAILABLE' },
+      { name: 'Dr. Shweta Bundela', department: 'General OPD', counter: 'Counter 5', activePatients: 6, status: 'AVAILABLE' }
     ],
     diagnostics: [
       { type: 'CT_SCAN', activeMachineCount: 2, queueLength: 3, avgTimePerScanMins: 20 },
-      { type: 'MRI', activeMachineCount: 1, queueLength: 5, avgTimePerScanMins: 35 },
+      { type: 'MRI', activeMachineCount: 1, queueLength: 4, avgTimePerScanMins: 30 },
       { type: 'ULTRASOUND', activeMachineCount: 3, queueLength: 2, avgTimePerScanMins: 15 },
       { type: 'X_RAY', activeMachineCount: 4, queueLength: 1, avgTimePerScanMins: 10 }
     ],

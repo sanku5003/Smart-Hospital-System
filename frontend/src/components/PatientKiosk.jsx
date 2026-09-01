@@ -11,7 +11,8 @@ import {
   QrCode,
   UserCheck,
   Clock,
-  FileText
+  FileText,
+  Calendar
 } from 'lucide-react';
 import QRCode from 'qrcode';
 import { apiRequest } from '../utils/api';
@@ -71,7 +72,6 @@ export default function PatientKiosk({ onTokenCreated }) {
 
     if (result.success && result.token) {
       setCreatedToken(result.token);
-      // Generate QR Code data URL
       try {
         const qrDataUrl = await QRCode.toDataURL(result.token.qrCodeData || result.token.tokenNumber);
         setQrCodeUrl(qrDataUrl);
@@ -94,11 +94,11 @@ export default function PatientKiosk({ onTokenCreated }) {
         <div className="relative z-10 max-w-3xl">
           <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-teal-500/10 text-teal-300 border border-teal-500/30 text-xs font-semibold mb-3">
             <Sparkles className="w-3.5 h-3.5" />
-            <span>AI Triage & Digital Token Portal</span>
+            <span>AI Triage & Specialist Matching Portal</span>
           </div>
-          <h2 className="text-2xl font-bold font-heading text-white">Smart Patient Reception & Priority Tokenizer</h2>
+          <h2 className="text-2xl font-bold font-heading text-white">Smart Patient Triage & Specialist Timings Tokenizer</h2>
           <p className="text-slate-400 text-sm mt-1">
-            Describe your health symptoms in voice or text. Our AI instantly triages your case, assigns an urgency severity score, and generates a priority-ordered token to eliminate physical queue waiting.
+            Describe your symptoms. Our AI triages your case, matches the duty specialist doctor, displays their shift timings, and generates a priority token.
           </p>
         </div>
       </div>
@@ -220,7 +220,7 @@ export default function PatientKiosk({ onTokenCreated }) {
               <textarea
                 rows="4"
                 required
-                placeholder="e.g. Severe chest tightness, dizziness for 2 hours, and difficulty breathing..."
+                placeholder="e.g. Severe chest tightness, dizziness for 2 hours..."
                 value={symptoms}
                 onChange={(e) => setSymptoms(e.target.value)}
                 className="w-full px-3.5 py-2.5 bg-darkbg border border-darkborder rounded-xl text-sm focus:outline-none focus:border-teal-500 text-slate-200"
@@ -233,11 +233,11 @@ export default function PatientKiosk({ onTokenCreated }) {
               className="w-full py-3.5 bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 text-darkbg font-bold rounded-xl transition shadow-lg shadow-teal-500/20 flex items-center justify-center space-x-2 text-sm"
             >
               {loading ? (
-                <span>AI Triaging Case & Generating Token...</span>
+                <span>AI Triaging Case & Matching Specialist...</span>
               ) : (
                 <>
                   <Send className="w-4 h-4" />
-                  <span>Submit for AI Triage & Get Token</span>
+                  <span>Submit for AI Triage & Specialist Match</span>
                 </>
               )}
             </button>
@@ -287,17 +287,25 @@ export default function PatientKiosk({ onTokenCreated }) {
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-slate-400">Department Routed:</span>
+                  <span className="text-xs font-semibold text-slate-400">Department:</span>
                   <span className="text-sm font-bold text-teal-300">{createdToken.department}</span>
                 </div>
 
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-slate-400">Assigned Desk:</span>
-                  <span className="text-sm font-bold text-slate-200">{createdToken.assignedCounter}</span>
+                <div className="flex items-center justify-between border-t border-darkborder/60 pt-2">
+                  <span className="text-xs font-semibold text-slate-400">Matched Specialist:</span>
+                  <span className="text-sm font-bold text-white">{createdToken.assignedDoctor}</span>
+                </div>
+
+                <div className="flex items-center justify-between text-xs text-amber-300 font-semibold bg-amber-500/10 p-2 rounded border border-amber-500/20">
+                  <span className="flex items-center space-x-1">
+                    <Calendar className="w-3.5 h-3.5 text-amber-400" />
+                    <span>Specialist Consultation Shift:</span>
+                  </span>
+                  <span>09:00 AM - 01:30 PM & 04:00 PM - 07:00 PM</span>
                 </div>
               </div>
 
-              {/* QR Code & Instructions */}
+              {/* QR Code */}
               <div className="flex items-center space-x-4 p-4 rounded-xl bg-darkbg border border-darkborder">
                 {qrCodeUrl && (
                   <img src={qrCodeUrl} alt="Token QR Code" className="w-24 h-24 rounded-lg bg-white p-1 border border-slate-700" />
@@ -311,7 +319,7 @@ export default function PatientKiosk({ onTokenCreated }) {
                 </div>
               </div>
 
-              {/* What to Bring Checklist */}
+              {/* Checklist */}
               {createdToken.aiGuidance?.whatToBring && (
                 <div className="space-y-2">
                   <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center space-x-1">
@@ -328,24 +336,15 @@ export default function PatientKiosk({ onTokenCreated }) {
                   </ul>
                 </div>
               )}
-
-              {/* Ayushman Bharat Scheme Note */}
-              <div className="p-3.5 rounded-xl bg-blue-500/10 border border-blue-500/30 flex items-start space-x-2 text-xs">
-                <ShieldCheck className="w-4 h-4 text-blue-400 flex-shrink-0 mt-0.5" />
-                <div>
-                  <span className="font-bold text-blue-300">Govt Health Scheme (Ayushman Bharat):</span>
-                  <p className="text-slate-300 mt-0.5">{createdToken.aiGuidance?.govtSchemeNote}</p>
-                </div>
-              </div>
             </div>
           ) : (
             <div className="glass-panel p-8 rounded-2xl border border-darkborder text-center space-y-4 flex flex-col items-center justify-center min-h-[420px]">
               <div className="w-16 h-16 rounded-2xl bg-teal-500/10 flex items-center justify-center text-teal-400 border border-teal-500/20">
                 <QrCode className="w-8 h-8" />
               </div>
-              <h3 className="text-lg font-bold text-white">Your Digital Token Will Appear Here</h3>
+              <h3 className="text-lg font-bold text-white">Your Priority Token & Specialist Details Will Appear Here</h3>
               <p className="text-slate-400 text-xs max-w-xs">
-                Fill out your details on the left to receive an AI-triaged priority token with instant QR check-in capabilities.
+                Fill out your details on the left to receive an AI-triaged priority token with matched doctor shift timings.
               </p>
             </div>
           )}

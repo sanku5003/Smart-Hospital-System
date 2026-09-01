@@ -21,12 +21,11 @@ export default function Navbar({
   onOpenDisasterModal,
   isDisasterModeActive
 }) {
-  // Navigation tabs defined per Role
   const patientNav = [
     { id: 'kiosk', label: 'AI Triage & Digital Token', icon: Bot },
     { id: 'queue', label: 'My Token Status & Alerts', icon: Activity },
-    { id: 'area-stats', label: 'Area Health Statistics', icon: MapPin },
-    { id: 'symptom-filter', label: 'Filter Hospitals by Symptoms', icon: Search },
+    { id: 'area-stats', label: 'Jhansi Area Health Stats', icon: MapPin },
+    { id: 'symptom-filter', label: 'Search Jhansi Doctors & Hospitals', icon: Search },
     { id: 'radiology-docs', label: 'Radiology Document Checklist', icon: FileText },
   ];
 
@@ -39,7 +38,7 @@ export default function Navbar({
   ];
 
   const cityNav = [
-    { id: 'citymap', label: 'City-Wide Hospital Feed & Map', icon: MapPin },
+    { id: 'citymap', label: 'Jhansi City Hospital Map & Feed', icon: MapPin },
     { id: 'area-stats', label: 'Locality Health Analytics', icon: BarChart3 },
     { id: 'analytics', label: 'AI Time-Series Inflow Forecast', icon: Sparkles },
   ];
@@ -60,13 +59,13 @@ export default function Navbar({
             <div>
               <div className="flex items-center space-x-2">
                 <span className="font-heading text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-teal-400 via-emerald-300 to-cyan-400">
-                  MedPulse CityNet
+                  MedPulse Jhansi
                 </span>
                 <span className="px-2 py-0.5 text-[10px] font-semibold bg-teal-500/20 text-teal-300 border border-teal-500/30 rounded-full uppercase">
                   {role} Portal
                 </span>
               </div>
-              <p className="text-xs text-slate-400 font-medium">Smart Queue & City Integration Module</p>
+              <p className="text-xs text-slate-400 font-medium">Smart Queue & Hospital Infrastructure - Jhansi, UP</p>
             </div>
           </div>
 
@@ -77,7 +76,7 @@ export default function Navbar({
               className="flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20 text-xs font-semibold transition"
             >
               <Ambulance className="w-4 h-4 animate-bounce-subtle" />
-              <span className="hidden sm:inline">Ambulance Pre-Arrival</span>
+              <span className="hidden sm:inline">Jhansi Ambulance Reserve</span>
             </button>
 
             {(role === 'HOSPITAL' || role === 'CITY_ADMIN') && (
@@ -90,7 +89,7 @@ export default function Navbar({
                 }`}
               >
                 <AlertTriangle className="w-4 h-4" />
-                <span>{isDisasterModeActive ? '🚨 SURGE MODE ACTIVE' : 'Disaster Surge Mode'}</span>
+                <span>{isDisasterModeActive ? '🚨 SURGE MODE ACTIVE' : 'Disaster Surge Protocol'}</span>
               </button>
             )}
           </div>
