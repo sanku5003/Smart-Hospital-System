@@ -90,7 +90,7 @@ export default function App() {
           <PatientKiosk onTokenCreated={() => setActiveTab('queue')} />
         )}
         {activeTab === 'queue' && (
-          <TokenTracker onOpenQrScanner={() => setIsQrScannerModalOpen(true)} />
+          <TokenTracker onOpenQrScanner={() => setIsQrScannerModalOpen(true)} role={role} />
         )}
         {activeTab === 'area-stats' && <AreaHealthDashboard selectedCity={selectedCity} />}
         {activeTab === 'symptom-filter' && <SymptomHospitalFilter selectedCity={selectedCity} />}

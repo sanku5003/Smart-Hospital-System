@@ -9,12 +9,15 @@ import {
   User,
   Phone,
   AlertCircle,
-  Volume2
+  Volume2,
+  Stethoscope,
+  MapPin,
+  Building2
 } from 'lucide-react';
 import { apiRequest } from '../utils/api';
 import { useSocket } from '../context/SocketContext';
 
-export default function TokenTracker({ onOpenQrScanner }) {
+export default function TokenTracker({ onOpenQrScanner, role = 'PATIENT' }) {
   const [tokens, setTokens] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedTokenForFeedback, setSelectedTokenForFeedback] = useState(null);
@@ -23,6 +26,8 @@ export default function TokenTracker({ onOpenQrScanner }) {
   const [actualWaitTime, setActualWaitTime] = useState(12);
   const [feedbackSuccess, setFeedbackSuccess] = useState(false);
   const { socket } = useSocket();
+
+  const isHospitalStaff = role === 'HOSPITAL' || role === 'CMO_ADMIN' || role === 'SUPER_ADMIN';
 
   const fetchTokens = async () => {
     setLoading(true);
@@ -129,7 +134,7 @@ export default function TokenTracker({ onOpenQrScanner }) {
         </div>
       </div>
 
-      {/* Live Queue Cards / Table */}
+      {/* Live Queue Table */}
       <div className="glass-panel rounded-2xl border border-darkborder overflow-hidden">
         <div className="px-6 py-4 border-b border-darkborder flex items-center justify-between bg-darkcard/50">
           <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
@@ -154,10 +159,13 @@ export default function TokenTracker({ onOpenQrScanner }) {
                   <th className="px-6 py-3.5">Token #</th>
                   <th className="px-6 py-3.5">Patient Details</th>
                   <th className="px-6 py-3.5">Triage & Severity</th>
-                  <th className="px-6 py-3.5">Department / Doctor</th>
+                  <th className="px-6 py-3.5">Department</th>
                   <th className="px-6 py-3.5">Est. Wait</th>
                   <th className="px-6 py-3.5">Check-In Status</th>
-                  <th className="px-6 py-3.5">Status Action</th>
+                  {/* DYNAMIC COLUMN: Only show Status Action dropdown to Hospital Staff; show Doctor & Address to Patients */}
+                  <th className="px-6 py-3.5">
+                    {isHospitalStaff ? 'Status Action (Staff Control)' : 'Doctor Name & Hospital Address'}
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-darkborder/50 text-slate-200">
@@ -202,7 +210,7 @@ export default function TokenTracker({ onOpenQrScanner }) {
                     </td>
                     <td className="px-6 py-4 space-y-0.5">
                       <div className="font-semibold text-slate-200">{token.department}</div>
-                      <div className="text-[11px] text-slate-400">{token.assignedDoctor} ({token.assignedCounter})</div>
+                      <div className="text-[11px] text-slate-400">Status: <span className="text-teal-300 font-bold uppercase">{token.status}</span></div>
                     </td>
                     <td className="px-6 py-4 font-semibold text-emerald-400">
                       {token.estimatedWaitMins} mins
@@ -220,27 +228,48 @@ export default function TokenTracker({ onOpenQrScanner }) {
                         </span>
                       )}
                     </td>
-                    <td className="px-6 py-4 space-x-2">
-                      <select
-                        value={token.status}
-                        onChange={(e) => handleUpdateStatus(token.tokenNumber, e.target.value)}
-                        className="px-2 py-1 bg-darkbg border border-darkborder text-slate-300 rounded text-xs focus:outline-none"
-                      >
-                        <option value="WAITING">WAITING</option>
-                        <option value="IN_CONSULTATION">IN CONSULTATION</option>
-                        <option value="DIAGNOSTIC_PENDING">DIAGNOSTIC PENDING</option>
-                        <option value="ADMITTED">ADMITTED</option>
-                        <option value="COMPLETED">COMPLETED</option>
-                        <option value="CANCELLED">CANCELLED</option>
-                      </select>
 
-                      {token.status === 'COMPLETED' && (
-                        <button
-                          onClick={() => setSelectedTokenForFeedback(token)}
-                          className="px-2 py-1 bg-teal-500/20 text-teal-300 rounded text-[11px] font-semibold hover:bg-teal-500/30"
-                        >
-                          Rate Visit
-                        </button>
+                    {/* DYNAMIC CELL CONTENT */}
+                    <td className="px-6 py-4 space-x-2">
+                      {isHospitalStaff ? (
+                        // HOSPITAL STAFF VIEW: Dropdown menu to change status
+                        <div className="flex items-center space-x-2">
+                          <select
+                            value={token.status}
+                            onChange={(e) => handleUpdateStatus(token.tokenNumber, e.target.value)}
+                            className="px-2.5 py-1.5 bg-darkbg border border-teal-500/40 text-teal-300 rounded-lg text-xs font-bold focus:outline-none focus:border-teal-400"
+                          >
+                            <option value="WAITING">WAITING</option>
+                            <option value="IN_CONSULTATION">IN CONSULTATION</option>
+                            <option value="DIAGNOSTIC_PENDING">DIAGNOSTIC PENDING</option>
+                            <option value="ADMITTED">ADMITTED</option>
+                            <option value="COMPLETED">COMPLETED</option>
+                            <option value="CANCELLED">CANCELLED</option>
+                          </select>
+
+                          {token.status === 'COMPLETED' && (
+                            <button
+                              onClick={() => setSelectedTokenForFeedback(token)}
+                              className="px-2 py-1 bg-teal-500/20 text-teal-300 rounded text-[11px] font-semibold hover:bg-teal-500/30"
+                            >
+                              Rate Visit
+                            </button>
+                          )}
+                        </div>
+                      ) : (
+                        // PATIENT PORTAL VIEW: Doctor Name & Hospital Address
+                        <div className="space-y-1">
+                          <div className="font-bold text-teal-300 flex items-center space-x-1.5">
+                            <Stethoscope className="w-4 h-4 text-teal-400 flex-shrink-0" />
+                            <span>{token.assignedDoctor || 'Dr. V. K. Paul'} ({token.assignedCounter || 'Counter 1'})</span>
+                          </div>
+                          <div className="text-[11px] text-slate-300 flex items-start space-x-1.5">
+                            <MapPin className="w-3.5 h-3.5 text-rose-400 flex-shrink-0 mt-0.5" />
+                            <span>
+                              <strong className="text-white">MLB Medical College & Super Specialty Hospital</strong>, Kanpur-Gwalior Bypass Road, Medical College Campus, Jhansi, UP 284128
+                            </span>
+                          </div>
+                        </div>
                       )}
                     </td>
                   </tr>
