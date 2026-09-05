@@ -102,6 +102,21 @@ export default function TokenTracker({ onOpenQrScanner, role = 'PATIENT' }) {
     }
   };
 
+  const getStatusBadgeClass = (status) => {
+    switch (status) {
+      case 'IN_CONSULTATION':
+        return 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40';
+      case 'COMPLETED':
+        return 'bg-blue-500/20 text-blue-300 border-blue-500/40';
+      case 'ADMITTED':
+        return 'bg-purple-500/20 text-purple-300 border-purple-500/40';
+      case 'CANCELLED':
+        return 'bg-rose-500/20 text-rose-300 border-rose-500/40';
+      default:
+        return 'bg-amber-500/20 text-amber-300 border-amber-500/40';
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Top Controls Bar */}
@@ -160,11 +175,12 @@ export default function TokenTracker({ onOpenQrScanner, role = 'PATIENT' }) {
                   <th className="px-6 py-3.5">Patient Details</th>
                   <th className="px-6 py-3.5">Triage & Severity</th>
                   <th className="px-6 py-3.5">Department</th>
+                  <th className="px-6 py-3.5">Status</th>
                   <th className="px-6 py-3.5">Est. Wait</th>
-                  <th className="px-6 py-3.5">Check-In Status</th>
-                  {/* DYNAMIC COLUMN: Only show Status Action dropdown to Hospital Staff; show Doctor & Address to Patients */}
+                  <th className="px-6 py-3.5">Check-In</th>
+                  {/* DYNAMIC COLUMN: Hospital Staff sees editable control; Patient sees Doctor & Hospital Address */}
                   <th className="px-6 py-3.5">
-                    {isHospitalStaff ? 'Status Action (Staff Control)' : 'Doctor Name & Hospital Address'}
+                    {isHospitalStaff ? 'Staff Action Control' : 'Doctor Name & Hospital Address'}
                   </th>
                 </tr>
               </thead>
@@ -208,10 +224,21 @@ export default function TokenTracker({ onOpenQrScanner, role = 'PATIENT' }) {
                         Score: <span className="text-amber-400 font-bold">{token.severityScore}/10</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 space-y-0.5">
-                      <div className="font-semibold text-slate-200">{token.department}</div>
-                      <div className="text-[11px] text-slate-400">Status: <span className="text-teal-300 font-bold uppercase">{token.status}</span></div>
+                    <td className="px-6 py-4 font-semibold text-slate-200">
+                      {token.department}
                     </td>
+
+                    {/* READ-ONLY STATUS BADGE FOR ALL USERS */}
+                    <td className="px-6 py-4">
+                      <span
+                        className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-extrabold border uppercase ${getStatusBadgeClass(
+                          token.status
+                        )}`}
+                      >
+                        {token.status ? token.status.replace('_', ' ') : 'WAITING'}
+                      </span>
+                    </td>
+
                     <td className="px-6 py-4 font-semibold text-emerald-400">
                       {token.estimatedWaitMins} mins
                     </td>
@@ -229,15 +256,15 @@ export default function TokenTracker({ onOpenQrScanner, role = 'PATIENT' }) {
                       )}
                     </td>
 
-                    {/* DYNAMIC CELL CONTENT */}
+                    {/* DYNAMIC CELL: EDITABLE DROPDOWN FOR STAFF; READ-ONLY DOCTOR & ADDRESS FOR PATIENTS */}
                     <td className="px-6 py-4 space-x-2">
                       {isHospitalStaff ? (
-                        // HOSPITAL STAFF VIEW: Dropdown menu to change status
+                        // HOSPITAL STAFF VIEW: Editable status dropdown menu
                         <div className="flex items-center space-x-2">
                           <select
                             value={token.status}
                             onChange={(e) => handleUpdateStatus(token.tokenNumber, e.target.value)}
-                            className="px-2.5 py-1.5 bg-darkbg border border-teal-500/40 text-teal-300 rounded-lg text-xs font-bold focus:outline-none focus:border-teal-400"
+                            className="px-2.5 py-1.5 bg-darkbg border border-teal-500/40 text-teal-300 rounded-lg text-xs font-bold focus:outline-none focus:border-teal-400 cursor-pointer"
                           >
                             <option value="WAITING">WAITING</option>
                             <option value="IN_CONSULTATION">IN CONSULTATION</option>
@@ -257,7 +284,7 @@ export default function TokenTracker({ onOpenQrScanner, role = 'PATIENT' }) {
                           )}
                         </div>
                       ) : (
-                        // PATIENT PORTAL VIEW: Doctor Name & Hospital Address
+                        // PATIENT PORTAL VIEW: Plain read-only Doctor Name and Hospital Address
                         <div className="space-y-1">
                           <div className="font-bold text-teal-300 flex items-center space-x-1.5">
                             <Stethoscope className="w-4 h-4 text-teal-400 flex-shrink-0" />
