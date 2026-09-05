@@ -1,9 +1,17 @@
 const mongoose = require('mongoose');
 
 const DoctorSchema = new mongoose.Schema({
+  id: String,
   name: { type: String, required: true },
+  qualification: String,
   department: { type: String, required: true },
-  counter: { type: String, required: true },
+  specialistTitle: String,
+  symptomsTreated: [String],
+  consultationHours: String,
+  currentStatus: String,
+  nextAvailableSlot: String,
+  opdRoom: String,
+  counter: { type: String, default: 'Counter 1' },
   activePatients: { type: Number, default: 0 },
   status: { type: String, enum: ['AVAILABLE', 'BUSY', 'OFFLINE'], default: 'AVAILABLE' }
 });
@@ -45,10 +53,11 @@ const HospitalSchema = new mongoose.Schema({
   hospitalId: { type: String, required: true, unique: true },
   name: { type: String, required: true },
   address: { type: String, required: true },
-  city: { type: String, default: 'Delhi' },
+  city: { type: String, default: 'Jhansi, UP' },
+  area: { type: String, default: 'Medical College Zone (Jhansi)' },
   lat: { type: Number, required: true },
   lng: { type: Number, required: true },
-  phone: { type: String, default: '+91 11 2658 8500' },
+  phone: { type: String, default: '+91 510 232 0808' },
   beds: [BedSchema],
   doctors: [DoctorSchema],
   diagnostics: [DiagnosticItemSchema],

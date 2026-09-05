@@ -1,8 +1,124 @@
 const Hospital = require('../models/Hospital');
-const Token = require('../models/Token');
-const { getPredictiveAnalytics } = require('../services/predictionEngine');
 
-// Get single hospital details or seed default if empty
+// Initialize / Seed Default Jhansi Hospital Data gracefully without duplicate key crashes
+async function seedHospital(hospitalId = 'HOSP-001') {
+  try {
+    // Gracefully handle legacy indexes if existing in MongoDB Atlas
+    try {
+      const collection = Hospital.collection;
+      const indexes = await collection.indexes();
+      const legacyCodeIndex = indexes.find(i => i.name === 'code_1');
+      if (legacyCodeIndex) {
+        console.log('🧹 Dropping legacy `code_1` index from hospitals collection...');
+        await collection.dropIndex('code_1');
+      }
+    } catch (idxErr) {
+      // Ignore index drop errors if index doesn't exist
+    }
+
+    const existing = await Hospital.findOne({ hospitalId });
+    if (existing) {
+      return existing;
+    }
+
+    const seedData = {
+      hospitalId: 'HOSP-001',
+      name: 'MLB Medical College & Super-Specialty Hospital, Jhansi',
+      address: 'Kanpur-Gwalior Bypass Road, Medical College Campus, Jhansi, UP 284128',
+      city: 'Jhansi, UP',
+      area: 'Medical College Zone (Jhansi)',
+      lat: 25.4385,
+      lng: 78.5833,
+      phone: '+91 510 232 0808',
+      beds: [
+        { bedNumber: 'ICU-101', category: 'ICU', status: 'AVAILABLE' },
+        { bedNumber: 'ICU-102', category: 'ICU', status: 'OCCUPIED', patientName: 'Ramesh Verma' },
+        { bedNumber: 'ICU-103', category: 'ICU', status: 'AVAILABLE' },
+        { bedNumber: 'EMG-201', category: 'EMERGENCY', status: 'AVAILABLE' },
+        { bedNumber: 'EMG-202', category: 'EMERGENCY', status: 'AVAILABLE' },
+        { bedNumber: 'GEN-301', category: 'GENERAL', status: 'OCCUPIED', patientName: 'Sita Devi' },
+        { bedNumber: 'GEN-302', category: 'GENERAL', status: 'AVAILABLE' },
+        { bedNumber: 'VENT-401', category: 'VENTILATOR', status: 'AVAILABLE' }
+      ],
+      doctors: [
+        {
+          id: 'DOC-101',
+          name: 'Dr. Prashant Gupta',
+          qualification: 'MD, DM (Cardiology), Senior Cardiologist',
+          department: 'Cardiology',
+          specialistTitle: 'Cardiologist',
+          symptomsTreated: ['chest pain', 'heart attack', 'high bp'],
+          consultationHours: '09:00 AM - 01:30 PM & 04:00 PM - 07:00 PM',
+          currentStatus: 'AVAILABLE_NOW',
+          nextAvailableSlot: '11:45 AM Today',
+          opdRoom: 'MLB Cardiac OPD - Room 104',
+          counter: 'Counter 1 (Cardio)',
+          activePatients: 3,
+          status: 'AVAILABLE'
+        },
+        {
+          id: 'DOC-102',
+          name: 'Dr. P. K. Jain',
+          qualification: 'MS (Orthopedics), Joint & Fracture Specialist',
+          department: 'Orthopedics',
+          specialistTitle: 'Orthopedic Surgeon',
+          symptomsTreated: ['fracture', 'bone pain', 'joint pain'],
+          consultationHours: '10:00 AM - 02:00 PM',
+          currentStatus: 'IN_CONSULTATION',
+          nextAvailableSlot: '12:15 PM Today',
+          opdRoom: 'MLB Ortho OPD - Room 208',
+          counter: 'Counter 2 (Ortho)',
+          activePatients: 7,
+          status: 'BUSY'
+        },
+        {
+          id: 'DOC-103',
+          name: 'Dr. Shweta Bundela',
+          qualification: 'MD (General Medicine)',
+          department: 'General OPD',
+          specialistTitle: 'General Physician',
+          symptomsTreated: ['fever', 'dengue', 'abdominal pain'],
+          consultationHours: '09:00 AM - 02:00 PM',
+          currentStatus: 'AVAILABLE_NOW',
+          nextAvailableSlot: '11:30 AM Today',
+          opdRoom: 'MLB General OPD Counter 3',
+          counter: 'Counter 3 (Gen OPD)',
+          activePatients: 1,
+          status: 'AVAILABLE'
+        }
+      ],
+      diagnostics: [
+        { type: 'CT_SCAN', activeMachineCount: 2, queueLength: 3, avgTimePerScanMins: 15, bookedSlots: [] },
+        { type: 'MRI', activeMachineCount: 1, queueLength: 4, avgTimePerScanMins: 30, bookedSlots: [] },
+        { type: 'ULTRASOUND', activeMachineCount: 3, queueLength: 2, avgTimePerScanMins: 10, bookedSlots: [] },
+        { type: 'X_RAY', activeMachineCount: 4, queueLength: 1, avgTimePerScanMins: 5, bookedSlots: [] }
+      ],
+      bloodBank: [
+        { group: 'A+', unitsAvailable: 18, lowStockThreshold: 5, reservedUnits: 2 },
+        { group: 'B+', unitsAvailable: 24, lowStockThreshold: 5, reservedUnits: 1 },
+        { group: 'O+', unitsAvailable: 30, lowStockThreshold: 5, reservedUnits: 3 },
+        { group: 'AB+', unitsAvailable: 8, lowStockThreshold: 5, reservedUnits: 0 },
+        { group: 'O-', unitsAvailable: 3, lowStockThreshold: 5, reservedUnits: 1 }
+      ]
+    };
+
+    const seeded = await Hospital.findOneAndUpdate(
+      { hospitalId: 'HOSP-001' },
+      seedData,
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
+
+    console.log('✅ Seeded MLB Medical College Hospital (HOSP-001)');
+    return seeded;
+  } catch (err) {
+    console.error('⚠️ Warning during seedHospital:', err.message);
+    // Return existing record or mock fallback if E11000 index conflict occurs
+    const fallback = await Hospital.findOne({ hospitalId: 'HOSP-001' });
+    return fallback;
+  }
+}
+
+// Get Hospital Data
 async function getHospitalData(req, res) {
   try {
     const { hospitalId = 'HOSP-001' } = req.params;
@@ -12,100 +128,94 @@ async function getHospitalData(req, res) {
       hospital = await seedHospital(hospitalId);
     }
 
-    const activeTokens = await Token.find({ hospitalId, status: { $in: ['WAITING', 'IN_CONSULTATION'] } });
-
-    res.json({ success: true, hospital, activeTokensCount: activeTokens.length });
+    res.json({ success: true, hospital });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
 }
 
-// Update Bed status or Pre-allocate for Ambulance
+// Update Bed Status (Hospital Operations Staff)
 async function updateBedStatus(req, res) {
   try {
     const { hospitalId = 'HOSP-001' } = req.params;
-    const { bedNumber, status, patientName, isPreAllocatedAmbulance, ambulanceId } = req.body;
+    const { bedNumber, status, patientName } = req.body;
 
-    const hospital = await Hospital.findOne({ hospitalId });
-    if (!hospital) return res.status(404).json({ success: false, message: 'Hospital not found' });
+    let hospital = await Hospital.findOne({ hospitalId });
+    if (!hospital) hospital = await seedHospital(hospitalId);
 
     const bed = hospital.beds.find(b => b.bedNumber === bedNumber);
-    if (!bed) return res.status(404).json({ success: false, message: 'Bed not found' });
+    if (!bed) {
+      return res.status(404).json({ success: false, message: 'Bed not found' });
+    }
 
-    if (status) bed.status = status;
+    bed.status = status;
     if (patientName !== undefined) bed.patientName = patientName;
-    if (isPreAllocatedAmbulance !== undefined) bed.isPreAllocatedAmbulance = isPreAllocatedAmbulance;
-    if (ambulanceId !== undefined) bed.ambulanceId = ambulanceId;
     if (status === 'OCCUPIED') bed.assignedTime = new Date();
+    if (status === 'AVAILABLE') {
+      bed.patientName = null;
+      bed.isPreAllocatedAmbulance = false;
+      bed.ambulanceId = null;
+    }
 
     hospital.lastUpdated = new Date();
     await hospital.save();
 
     if (req.io) {
       req.io.emit('hospital-updated', { hospitalId, hospital });
-      req.io.emit('city-beds-updated', { hospitalId, beds: hospital.beds });
     }
 
-    res.json({ success: true, bed, hospital });
+    res.json({ success: true, message: `Bed ${bedNumber} status updated to ${status}`, hospital });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
 }
 
-// Doctor Counter Load Balancing calculation
+// Get Doctor Load Balancing Data
 async function getDoctorLoadBalancing(req, res) {
   try {
     const { hospitalId = 'HOSP-001' } = req.params;
-    const hospital = await Hospital.findOne({ hospitalId });
-    if (!hospital) return res.status(404).json({ success: false, message: 'Hospital not found' });
+    let hospital = await Hospital.findOne({ hospitalId });
+    if (!hospital) hospital = await seedHospital(hospitalId);
 
-    const waitingTokens = await Token.find({ hospitalId, status: 'WAITING' });
-    
-    const doctorStats = hospital.doctors.map(doc => {
-      const docTokens = waitingTokens.filter(t => t.assignedDoctor === doc.name || t.department === doc.department);
-      return {
-        ...doc.toObject(),
-        queueLength: docTokens.length,
-        estimatedWaitMins: docTokens.length * 10
-      };
-    });
-
-    res.json({ success: true, doctors: doctorStats });
+    res.json({ success: true, doctors: hospital.doctors });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
 }
 
-// Book Diagnostic Scan
+// Book Diagnostic Equipment Slot (CT, MRI, USG, X-Ray)
 async function bookDiagnosticScan(req, res) {
   try {
     const { hospitalId = 'HOSP-001' } = req.params;
-    const { diagnosticType, patientName, tokenNumber, timeSlot } = req.body;
+    const { scanType, patientName, timeSlot, tokenNumber } = req.body;
 
-    const hospital = await Hospital.findOne({ hospitalId });
-    if (!hospital) return res.status(404).json({ success: false, message: 'Hospital not found' });
+    let hospital = await Hospital.findOne({ hospitalId });
+    if (!hospital) hospital = await seedHospital(hospitalId);
 
-    const diag = hospital.diagnostics.find(d => d.type === diagnosticType);
-    if (!diag) return res.status(404).json({ success: false, message: 'Diagnostic type not found' });
+    const diag = hospital.diagnostics.find(d => d.type === scanType);
+    if (!diag) {
+      return res.status(404).json({ success: false, message: 'Diagnostic scanner not found' });
+    }
 
     diag.bookedSlots.push({
       patientName,
+      timeSlot,
       tokenNumber,
-      timeSlot: timeSlot || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       status: 'CONFIRMED'
     });
     diag.queueLength += 1;
 
-    hospital.lastUpdated = new Date();
     await hospital.save();
 
-    if (tokenNumber) {
-      await Token.findOneAndUpdate({ tokenNumber }, { status: 'DIAGNOSTIC_PENDING' });
+    if (req.io) {
+      req.io.emit('hospital-updated', { hospitalId, hospital });
     }
 
-    if (req.io) req.io.emit('hospital-updated', { hospitalId, hospital });
-
-    res.json({ success: true, diagnostic: diag });
+    res.json({
+      success: true,
+      message: `${scanType} appointment confirmed for ${patientName} at ${timeSlot}`,
+      diagnostic: diag
+    });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -115,117 +225,72 @@ async function bookDiagnosticScan(req, res) {
 async function reserveBloodStock(req, res) {
   try {
     const { hospitalId = 'HOSP-001' } = req.params;
-    const { group, units = 1 } = req.body;
+    const { bloodGroup, units = 1 } = req.body;
 
-    const hospital = await Hospital.findOne({ hospitalId });
-    if (!hospital) return res.status(404).json({ success: false, message: 'Hospital not found' });
+    let hospital = await Hospital.findOne({ hospitalId });
+    if (!hospital) hospital = await seedHospital(hospitalId);
 
-    const bloodItem = hospital.bloodBank.find(b => b.group === group);
-    if (!bloodItem) return res.status(404).json({ success: false, message: 'Blood group not found' });
+    const bloodItem = hospital.bloodBank.find(b => b.group === bloodGroup);
+    if (!bloodItem) {
+      return res.status(404).json({ success: false, message: 'Blood group category not found' });
+    }
 
     if (bloodItem.unitsAvailable < units) {
-      return res.status(400).json({ success: false, message: `Insufficient units for ${group}. Available: ${bloodItem.unitsAvailable}` });
+      return res.status(400).json({ success: false, message: `Insufficient units for ${bloodGroup}. Available: ${bloodItem.unitsAvailable}` });
     }
 
     bloodItem.unitsAvailable -= units;
     bloodItem.reservedUnits += units;
 
-    hospital.lastUpdated = new Date();
     await hospital.save();
 
-    if (req.io) req.io.emit('hospital-updated', { hospitalId, hospital });
+    if (req.io) {
+      req.io.emit('hospital-updated', { hospitalId, hospital });
+    }
 
-    res.json({ success: true, bloodBank: hospital.bloodBank, reservedGroup: group, units });
+    res.json({
+      success: true,
+      message: `Reserved ${units} unit(s) of ${bloodGroup}`,
+      bloodBank: hospital.bloodBank
+    });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
 }
 
-// Toggle Disaster / Surge Mode
+// Toggle Disaster Surge Mode
 async function toggleDisasterMode(req, res) {
   try {
     const { hospitalId = 'HOSP-001' } = req.params;
     const { isDisasterSurgeMode } = req.body;
 
-    const hospital = await Hospital.findOne({ hospitalId });
-    if (!hospital) return res.status(404).json({ success: false, message: 'Hospital not found' });
+    let hospital = await Hospital.findOne({ hospitalId });
+    if (!hospital) hospital = await seedHospital(hospitalId);
 
     hospital.isDisasterSurgeMode = isDisasterSurgeMode;
-    hospital.lastUpdated = new Date();
     await hospital.save();
 
     if (req.io) {
-      req.io.emit('disaster-mode-alert', { hospitalId, hospitalName: hospital.name, isDisasterSurgeMode });
+      req.io.emit('disaster-mode-toggled', { hospitalId, isDisasterSurgeMode });
       req.io.emit('hospital-updated', { hospitalId, hospital });
     }
 
-    res.json({ success: true, isDisasterSurgeMode: hospital.isDisasterSurgeMode });
+    res.json({
+      success: true,
+      message: `Disaster Surge Mode ${isDisasterSurgeMode ? 'ACTIVATED' : 'DEACTIVATED'} for ${hospital.name}`,
+      isDisasterSurgeMode
+    });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
 }
 
-// Helper to seed initial hospital data for Jhansi, UP
-async function seedHospital(hospitalId = 'HOSP-001') {
-  const seed = new Hospital({
-    hospitalId,
-    name: 'MLB Medical College & Super-Specialty Hospital, Jhansi',
-    address: 'Kanpur-Gwalior Bypass Road, Jhansi, Uttar Pradesh 284128',
-    city: 'Jhansi',
-    lat: 25.4385,
-    lng: 78.5833,
-    phone: '+91 510 232 0808',
-    beds: [
-      { bedNumber: 'ICU-01', category: 'ICU', status: 'OCCUPIED', patientName: 'Ramesh Bundela', estimatedDischargeTime: new Date(Date.now() + 3600000) },
-      { bedNumber: 'ICU-02', category: 'ICU', status: 'AVAILABLE' },
-      { bedNumber: 'ICU-03', category: 'ICU', status: 'OCCUPIED', patientName: 'Sunita Yadav' },
-      { bedNumber: 'ICU-04', category: 'ICU', status: 'AVAILABLE' },
-      { bedNumber: 'VENT-01', category: 'VENTILATOR', status: 'OCCUPIED', patientName: 'Amit Verma' },
-      { bedNumber: 'VENT-02', category: 'VENTILATOR', status: 'AVAILABLE' },
-      { bedNumber: 'EMG-01', category: 'EMERGENCY', status: 'OCCUPIED', patientName: 'Priya Singh' },
-      { bedNumber: 'EMG-02', category: 'EMERGENCY', status: 'AVAILABLE' },
-      { bedNumber: 'EMG-03', category: 'EMERGENCY', status: 'AVAILABLE' },
-      { bedNumber: 'GEN-101', category: 'GENERAL', status: 'OCCUPIED', patientName: 'Rajesh Gupta' },
-      { bedNumber: 'GEN-102', category: 'GENERAL', status: 'AVAILABLE' },
-      { bedNumber: 'GEN-103', category: 'GENERAL', status: 'AVAILABLE' },
-      { bedNumber: 'GEN-104', category: 'GENERAL', status: 'CLEANING' },
-      { bedNumber: 'GEN-105', category: 'GENERAL', status: 'AVAILABLE' }
-    ],
-    doctors: [
-      { name: 'Dr. N. S. Sengar', department: 'Emergency', counter: 'Emergency Desk 1', activePatients: 3, status: 'AVAILABLE' },
-      { name: 'Dr. R. K. Niranjan', department: 'Pulmonology', counter: 'Counter 2', activePatients: 4, status: 'AVAILABLE' },
-      { name: 'Dr. Prashant Gupta', department: 'Cardiology', counter: 'Counter 3', activePatients: 2, status: 'AVAILABLE' },
-      { name: 'Dr. P. K. Jain', department: 'Orthopedics', counter: 'Counter 4', activePatients: 3, status: 'AVAILABLE' },
-      { name: 'Dr. Shweta Bundela', department: 'General OPD', counter: 'Counter 5', activePatients: 6, status: 'AVAILABLE' }
-    ],
-    diagnostics: [
-      { type: 'CT_SCAN', activeMachineCount: 2, queueLength: 3, avgTimePerScanMins: 20 },
-      { type: 'MRI', activeMachineCount: 1, queueLength: 4, avgTimePerScanMins: 30 },
-      { type: 'ULTRASOUND', activeMachineCount: 3, queueLength: 2, avgTimePerScanMins: 15 },
-      { type: 'X_RAY', activeMachineCount: 4, queueLength: 1, avgTimePerScanMins: 10 }
-    ],
-    bloodBank: [
-      { group: 'A+', unitsAvailable: 18, lowStockThreshold: 5 },
-      { group: 'A-', unitsAvailable: 4, lowStockThreshold: 5 },
-      { group: 'B+', unitsAvailable: 25, lowStockThreshold: 5 },
-      { group: 'B-', unitsAvailable: 3, lowStockThreshold: 5 },
-      { group: 'AB+', unitsAvailable: 12, lowStockThreshold: 5 },
-      { group: 'AB-', unitsAvailable: 2, lowStockThreshold: 5 },
-      { group: 'O+', unitsAvailable: 30, lowStockThreshold: 5 },
-      { group: 'O-', unitsAvailable: 5, lowStockThreshold: 5 }
-    ]
-  });
-
-  await seed.save();
-  return seed;
-}
-
 module.exports = {
+  seedHospital,
   getHospitalData,
   updateBedStatus,
   getDoctorLoadBalancing,
   bookDiagnosticScan,
   reserveBloodStock,
-  toggleDisasterMode,
-  seedHospital
+  toggleDisasterMode
 };
