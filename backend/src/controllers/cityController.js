@@ -1,14 +1,14 @@
 const Hospital = require('../models/Hospital');
 const { getPredictiveAnalytics } = require('../services/predictionEngine');
 
-// City-wide seed hospitals list for Jhansi, Uttar Pradesh (UP)
-const CITY_HOSPITALS_SEED = [
+// Multi-City Seed Hospitals Dataset (Jhansi, Kanpur, Lucknow, Agra, Gwalior, Delhi NCR)
+const ALL_CITIES_HOSPITALS_SEED = [
+  // --- JHANSI, UP ---
   {
     hospitalId: 'HOSP-001',
     name: 'MLB Medical College & Super-Specialty Hospital, Jhansi',
     address: 'Kanpur-Gwalior Bypass Road, Medical College Campus, Jhansi',
-    city: 'Jhansi',
-    state: 'Uttar Pradesh',
+    city: 'Jhansi, UP',
     area: 'Medical College Zone (Jhansi)',
     lat: 25.4385,
     lng: 78.5833,
@@ -21,7 +21,7 @@ const CITY_HOSPITALS_SEED = [
     ctScanWaitMins: 20,
     mriWaitMins: 35,
     bloodBankStatus: 'Good',
-    specialties: ['Cardiology', 'Emergency', 'Neurology', 'Orthopedics', 'Pulmonology', 'Pediatrics', 'Trauma'],
+    specialties: ['Cardiology', 'Emergency', 'Neurology', 'Orthopedics', 'Pulmonology', 'Pediatrics'],
     specialists: [
       {
         id: 'DOC-101',
@@ -29,12 +29,11 @@ const CITY_HOSPITALS_SEED = [
         qualification: 'MD, DM (Cardiology), Senior Cardiologist',
         department: 'Cardiology',
         specialistTitle: 'Cardiologist',
-        symptomsTreated: ['chest pain', 'heart attack', 'high bp', 'palpitations'],
+        symptomsTreated: ['chest pain', 'heart attack', 'high bp'],
         consultationHours: '09:00 AM - 01:30 PM & 04:00 PM - 07:00 PM',
         currentStatus: 'AVAILABLE_NOW',
         nextAvailableSlot: '11:45 AM Today',
-        opdRoom: 'MLB Cardiac OPD - Room 104',
-        queueCount: 3
+        opdRoom: 'MLB Cardiac OPD - Room 104'
       },
       {
         id: 'DOC-102',
@@ -42,38 +41,11 @@ const CITY_HOSPITALS_SEED = [
         qualification: 'MS (Orthopedics), Joint & Fracture Specialist',
         department: 'Orthopedics',
         specialistTitle: 'Orthopedic Surgeon',
-        symptomsTreated: ['fracture', 'bone pain', 'joint pain', 'back pain'],
+        symptomsTreated: ['fracture', 'bone pain', 'joint pain'],
         consultationHours: '10:00 AM - 02:00 PM',
         currentStatus: 'IN_CONSULTATION',
         nextAvailableSlot: '12:15 PM Today',
-        opdRoom: 'MLB Ortho OPD - Room 208',
-        queueCount: 4
-      },
-      {
-        id: 'DOC-103',
-        name: 'Dr. R. K. Niranjan',
-        qualification: 'MD, DM (Pulmonology), Respiratory Specialist',
-        department: 'Pulmonology',
-        specialistTitle: 'Pulmonologist',
-        symptomsTreated: ['cough', 'breathing difficulty', 'asthma', 'chest congestion'],
-        consultationHours: '08:30 AM - 12:30 PM & 03:30 PM - 06:00 PM',
-        currentStatus: 'AVAILABLE_NOW',
-        nextAvailableSlot: '11:15 AM Today',
-        opdRoom: 'MLB Chest OPD - Room 302',
-        queueCount: 2
-      },
-      {
-        id: 'DOC-104',
-        name: 'Dr. N. S. Sengar',
-        qualification: 'MD (Emergency Medicine & Trauma Specialist)',
-        department: 'Emergency',
-        specialistTitle: 'Emergency Medicine / Trauma Specialist',
-        symptomsTreated: ['fever', 'severe trauma', 'bleeding', 'unconscious'],
-        consultationHours: '24/7 Emergency Duty Shift',
-        currentStatus: 'AVAILABLE_NOW',
-        nextAvailableSlot: 'Immediate Emergency Triage',
-        opdRoom: 'MLB Emergency Bay 1',
-        queueCount: 1
+        opdRoom: 'MLB Ortho OPD - Room 208'
       }
     ]
   },
@@ -81,8 +53,7 @@ const CITY_HOSPITALS_SEED = [
     hospitalId: 'HOSP-002',
     name: 'District Hospital Jhansi (Civil Hospital)',
     address: 'Civil Lines, Near Elite Crossing, Jhansi',
-    city: 'Jhansi',
-    state: 'Uttar Pradesh',
+    city: 'Jhansi, UP',
     area: 'Civil Lines (Jhansi)',
     lat: 25.4484,
     lng: 78.5685,
@@ -95,211 +66,368 @@ const CITY_HOSPITALS_SEED = [
     ctScanWaitMins: 15,
     mriWaitMins: 40,
     bloodBankStatus: 'Good',
-    specialties: ['Emergency', 'General OPD', 'Pulmonology', 'Orthopedics', 'Pediatrics'],
+    specialties: ['Emergency', 'General OPD', 'Pulmonology', 'Orthopedics'],
     specialists: [
       {
         id: 'DOC-201',
         name: 'Dr. Shweta Bundela',
-        qualification: 'MD (General Medicine & Infectious Disease Specialist)',
+        qualification: 'MD (General Medicine)',
         department: 'General OPD',
-        specialistTitle: 'General Physician / Infectious Disease',
-        symptomsTreated: ['fever', 'dengue', 'abdominal pain', 'vomiting', 'dizziness'],
+        specialistTitle: 'General Physician',
+        symptomsTreated: ['fever', 'dengue', 'abdominal pain'],
         consultationHours: '09:00 AM - 02:00 PM',
         currentStatus: 'AVAILABLE_NOW',
         nextAvailableSlot: '11:30 AM Today',
-        opdRoom: 'Civil Hospital OPD Counter 3',
-        queueCount: 4
-      },
-      {
-        id: 'DOC-202',
-        name: 'Dr. R. S. Tripathi',
-        qualification: 'MS (Orthopedics & Trauma)',
-        department: 'Orthopedics',
-        specialistTitle: 'Orthopedic Surgeon',
-        symptomsTreated: ['fracture', 'bone pain', 'dislocation'],
-        consultationHours: '09:30 AM - 01:30 PM',
-        currentStatus: 'IN_CONSULTATION',
-        nextAvailableSlot: '12:45 PM Today',
-        opdRoom: 'Civil Hospital Ortho Room 5',
-        queueCount: 3
+        opdRoom: 'Civil Hospital OPD Counter 3'
       }
     ]
   },
+
+  // --- KANPUR, UP ---
   {
-    hospitalId: 'HOSP-003',
-    name: "St. Jude's Hospital & Diagnostic Center Jhansi",
-    address: 'Civil Lines, Jhansi',
-    city: 'Jhansi',
-    state: 'Uttar Pradesh',
-    area: 'Civil Lines (Jhansi)',
-    lat: 25.4452,
-    lng: 78.5720,
-    phone: '+91 510 244 1358',
-    totalBeds: 250,
-    freeBeds: 38,
-    freeICU: 6,
-    freeVentilators: 3,
-    opdAvgWaitMins: 10,
-    ctScanWaitMins: 10,
-    mriWaitMins: 20,
+    hospitalId: 'HOSP-KNP-01',
+    name: 'GSVM Medical College & Hospital Kanpur',
+    address: 'Swaroop Nagar, Kanpur, UP',
+    city: 'Kanpur, UP',
+    area: 'Swaroop Nagar (Kanpur)',
+    lat: 26.4782,
+    lng: 80.3012,
+    phone: '+91 512 253 5454',
+    totalBeds: 850,
+    freeBeds: 58,
+    freeICU: 14,
+    freeVentilators: 7,
+    opdAvgWaitMins: 20,
+    ctScanWaitMins: 18,
+    mriWaitMins: 30,
     bloodBankStatus: 'Good',
-    specialties: ['Cardiology', 'Neurology', 'Gynecology', 'Orthopedics'],
+    specialties: ['Cardiology', 'Neurology', 'Pulmonology', 'Emergency'],
     specialists: [
       {
-        id: 'DOC-301',
-        name: 'Dr. Anoop Agarwal',
+        id: 'DOC-KNP-1',
+        name: 'Dr. R. P. Sharma',
         qualification: 'MD, DM (Cardiology)',
         department: 'Cardiology',
         specialistTitle: 'Cardiologist',
-        symptomsTreated: ['chest pain', 'heart attack', 'palpitations'],
-        consultationHours: '10:00 AM - 03:00 PM',
-        currentStatus: 'AVAILABLE_NOW',
-        nextAvailableSlot: '11:20 AM Today',
-        opdRoom: "St. Jude's Cardiac Suite 2",
-        queueCount: 2
-      },
-      {
-        id: 'DOC-302',
-        name: 'Dr. Meena Sharma',
-        qualification: 'MD, DNB (Gynecology & Obstetric Specialist)',
-        department: 'Gynecology',
-        specialistTitle: 'Gynecologist / Obstetrician',
-        symptomsTreated: ['pregnant', 'labor pain', 'maternal care'],
-        consultationHours: '10:30 AM - 02:30 PM',
-        currentStatus: 'AVAILABLE_NOW',
-        nextAvailableSlot: '11:40 AM Today',
-        opdRoom: "St. Jude's Maternity Ward",
-        queueCount: 1
-      }
-    ]
-  },
-  {
-    hospitalId: 'HOSP-004',
-    name: 'Nirmal Hospital & Trauma Centre Jhansi',
-    address: 'SIPRI Bazar / Elite Crossing, Jhansi',
-    city: 'Jhansi',
-    state: 'Uttar Pradesh',
-    area: 'SIPRI Bazar (Jhansi)',
-    lat: 25.4421,
-    lng: 78.5615,
-    phone: '+91 510 244 8899',
-    totalBeds: 180,
-    freeBeds: 30,
-    freeICU: 5,
-    freeVentilators: 2,
-    opdAvgWaitMins: 12,
-    ctScanWaitMins: 12,
-    mriWaitMins: 25,
-    bloodBankStatus: 'Moderate',
-    specialties: ['Orthopedics', 'Trauma', 'Neuro Surgery', 'Emergency'],
-    specialists: [
-      {
-        id: 'DOC-401',
-        name: 'Dr. Rajeev Nirmal',
-        qualification: 'MS (Orthopedics), Joint Replacement & Trauma Specialist',
-        department: 'Orthopedics',
-        specialistTitle: 'Orthopedic Surgeon',
-        symptomsTreated: ['fracture', 'bone injury', 'accidental trauma'],
-        consultationHours: '09:00 AM - 01:00 PM & 04:00 PM - 07:00 PM',
+        symptomsTreated: ['chest pain', 'heart attack'],
+        consultationHours: '09:00 AM - 02:00 PM',
         currentStatus: 'AVAILABLE_NOW',
         nextAvailableSlot: '11:30 AM Today',
-        opdRoom: 'Nirmal Trauma Care 1',
-        queueCount: 2
+        opdRoom: 'GSVM Cardiology Room 12'
       }
     ]
   },
   {
-    hospitalId: 'HOSP-005',
-    name: 'Sudha Hospital & Heart Institute Jhansi',
-    address: 'Gwalior Road, Jhansi',
-    city: 'Jhansi',
-    state: 'Uttar Pradesh',
-    area: 'Gwalior Road (Jhansi)',
-    lat: 25.4520,
-    lng: 78.5750,
-    phone: '+91 510 233 1122',
-    totalBeds: 220,
+    hospitalId: 'HOSP-KNP-02',
+    name: 'Regency Super Specialty Hospital Kanpur',
+    address: 'Sarvodaya Nagar, Kanpur, UP',
+    city: 'Kanpur, UP',
+    area: 'Sarvodaya Nagar (Kanpur)',
+    lat: 26.4715,
+    lng: 80.3088,
+    phone: '+91 512 308 1111',
+    totalBeds: 400,
+    freeBeds: 72,
+    freeICU: 18,
+    freeVentilators: 9,
+    opdAvgWaitMins: 10,
+    ctScanWaitMins: 10,
+    mriWaitMins: 15,
+    bloodBankStatus: 'Good',
+    specialties: ['Neurology', 'Cardiology', 'Orthopedics'],
+    specialists: [
+      {
+        id: 'DOC-KNP-2',
+        name: 'Dr. Atul Kapoor',
+        qualification: 'MD, DM (Neurology)',
+        department: 'Neurology',
+        specialistTitle: 'Neurologist',
+        symptomsTreated: ['stroke', 'headache'],
+        consultationHours: '10:00 AM - 03:00 PM',
+        currentStatus: 'AVAILABLE_NOW',
+        nextAvailableSlot: '11:45 AM Today',
+        opdRoom: 'Regency Neuro Center'
+      }
+    ]
+  },
+
+  // --- LUCKNOW, UP ---
+  {
+    hospitalId: 'HOSP-LKO-01',
+    name: "KGMU King George's Medical University",
+    address: 'Chowk, Lucknow, UP',
+    city: 'Lucknow, UP',
+    area: 'Chowk (Lucknow)',
+    lat: 26.8685,
+    lng: 80.9168,
+    phone: '+91 522 225 7540',
+    totalBeds: 1200,
+    freeBeds: 85,
+    freeICU: 22,
+    freeVentilators: 12,
+    opdAvgWaitMins: 25,
+    ctScanWaitMins: 25,
+    mriWaitMins: 45,
+    bloodBankStatus: 'Good',
+    specialties: ['Cardiology', 'Neurology', 'Orthopedics', 'Emergency', 'Pulmonology'],
+    specialists: [
+      {
+        id: 'DOC-LKO-1',
+        name: 'Dr. S. C. Tiwari',
+        qualification: 'MD, DM (Cardiology)',
+        department: 'Cardiology',
+        specialistTitle: 'Cardiologist',
+        symptomsTreated: ['chest pain', 'heart attack'],
+        consultationHours: '09:00 AM - 02:00 PM',
+        currentStatus: 'AVAILABLE_NOW',
+        nextAvailableSlot: '11:15 AM Today',
+        opdRoom: 'KGMU Cardiology Block'
+      }
+    ]
+  },
+  {
+    hospitalId: 'HOSP-LKO-02',
+    name: 'SGPGI Sanjay Gandhi Postgraduate Institute',
+    address: 'Raebareli Road, Lucknow, UP',
+    city: 'Lucknow, UP',
+    area: 'Raebareli Road (Lucknow)',
+    lat: 26.7441,
+    lng: 80.9388,
+    phone: '+91 522 266 8004',
+    totalBeds: 900,
+    freeBeds: 60,
+    freeICU: 16,
+    freeVentilators: 10,
+    opdAvgWaitMins: 15,
+    ctScanWaitMins: 15,
+    mriWaitMins: 25,
+    bloodBankStatus: 'Good',
+    specialties: ['Cardiology', 'Neurology', 'Gastroenterology'],
+    specialists: [
+      {
+        id: 'DOC-LKO-2',
+        name: 'Dr. V. A. Saraswat',
+        qualification: 'MD, DM (Gastroenterology)',
+        department: 'Gastroenterology',
+        specialistTitle: 'Gastroenterologist',
+        symptomsTreated: ['abdominal pain', 'vomiting'],
+        consultationHours: '09:30 AM - 01:30 PM',
+        currentStatus: 'AVAILABLE_NOW',
+        nextAvailableSlot: '11:40 AM Today',
+        opdRoom: 'SGPGI Gastro OPD'
+      }
+    ]
+  },
+
+  // --- AGRA, UP ---
+  {
+    hospitalId: 'HOSP-AGR-01',
+    name: 'SN Medical College & Hospital Agra',
+    address: 'Moti Katra, Agra, UP',
+    city: 'Agra, UP',
+    area: 'Moti Katra (Agra)',
+    lat: 27.1895,
+    lng: 78.0055,
+    phone: '+91 562 226 0144',
+    totalBeds: 650,
     freeBeds: 45,
     freeICU: 9,
     freeVentilators: 4,
-    opdAvgWaitMins: 8,
-    ctScanWaitMins: 10,
-    mriWaitMins: 18,
+    opdAvgWaitMins: 18,
+    ctScanWaitMins: 18,
+    mriWaitMins: 35,
     bloodBankStatus: 'Good',
-    specialties: ['Cardiology', 'Cardiac Surgery', 'Neurology', 'Pulmonology'],
+    specialties: ['Emergency', 'Orthopedics', 'Pulmonology'],
     specialists: [
       {
-        id: 'DOC-501',
-        name: 'Dr. Alok Sudha',
-        qualification: 'MD, DM (Cardiology), Chief Interventional Cardiologist',
+        id: 'DOC-AGR-1',
+        name: 'Dr. C. P. Pal',
+        qualification: 'MS (Orthopedics)',
+        department: 'Orthopedics',
+        specialistTitle: 'Orthopedic Surgeon',
+        symptomsTreated: ['fracture', 'joint pain'],
+        consultationHours: '09:00 AM - 01:30 PM',
+        currentStatus: 'AVAILABLE_NOW',
+        nextAvailableSlot: '11:30 AM Today',
+        opdRoom: 'SN Medical Ortho Wing'
+      }
+    ]
+  },
+
+  // --- GWALIOR, MP ---
+  {
+    hospitalId: 'HOSP-GWL-01',
+    name: 'GR Medical College & J. A. Hospital Gwalior',
+    address: 'Lashkar, Gwalior, MP',
+    city: 'Gwalior, MP',
+    area: 'Lashkar (Gwalior)',
+    lat: 26.2084,
+    lng: 78.1633,
+    phone: '+91 751 240 3200',
+    totalBeds: 800,
+    freeBeds: 50,
+    freeICU: 11,
+    freeVentilators: 6,
+    opdAvgWaitMins: 16,
+    ctScanWaitMins: 16,
+    mriWaitMins: 30,
+    bloodBankStatus: 'Good',
+    specialties: ['Cardiology', 'Emergency', 'Neurology', 'Orthopedics'],
+    specialists: [
+      {
+        id: 'DOC-GWL-1',
+        name: 'Dr. Sanjay Swarnakar',
+        qualification: 'MD, DM (Cardiology)',
         department: 'Cardiology',
         specialistTitle: 'Cardiologist',
-        symptomsTreated: ['chest pain', 'bp', 'heart attack', 'angina'],
-        consultationHours: '10:00 AM - 02:00 PM',
+        symptomsTreated: ['chest pain', 'heart attack'],
+        consultationHours: '09:00 AM - 02:00 PM',
         currentStatus: 'AVAILABLE_NOW',
-        nextAvailableSlot: '11:15 AM Today',
-        opdRoom: 'Sudha Cardiac Center 1',
-        queueCount: 1
+        nextAvailableSlot: '11:20 AM Today',
+        opdRoom: 'JAH Cardiac Center'
+      }
+    ]
+  },
+
+  // --- DELHI NCR ---
+  {
+    hospitalId: 'HOSP-DEL-01',
+    name: 'AIIMS Central Super-Specialty Hospital Delhi',
+    address: 'Ansari Nagar, New Delhi',
+    city: 'Delhi NCR',
+    area: 'South Delhi',
+    lat: 28.5672,
+    lng: 77.2100,
+    phone: '+91 11 2658 8500',
+    totalBeds: 1500,
+    freeBeds: 35,
+    freeICU: 5,
+    freeVentilators: 3,
+    opdAvgWaitMins: 25,
+    ctScanWaitMins: 25,
+    mriWaitMins: 45,
+    bloodBankStatus: 'Good',
+    specialties: ['Cardiology', 'Neurology', 'Pulmonology', 'Emergency'],
+    specialists: [
+      {
+        id: 'DOC-DEL-1',
+        name: 'Dr. Naresh Trehan',
+        qualification: 'MD, DM (Cardiology)',
+        department: 'Cardiology',
+        specialistTitle: 'Cardiologist',
+        symptomsTreated: ['chest pain', 'heart attack'],
+        consultationHours: '09:00 AM - 01:30 PM',
+        currentStatus: 'AVAILABLE_NOW',
+        nextAvailableSlot: '11:45 AM Today',
+        opdRoom: 'AIIMS Cardiac Block'
       }
     ]
   }
 ];
 
-// Area Health Statistics Data for Jhansi, UP Localities
-const AREA_STATS = {
-  'Civil Lines (Jhansi)': {
-    locality: 'Civil Lines (Jhansi)',
-    totalBeds: 730,
-    availableBeds: 103,
-    availableICUs: 18,
-    activeSurgeFactor: 'Normal',
-    aqiLevel: 145,
-    dominantSymptoms: ['High Fever (Dengue/Viral)', 'Chest Tightness', 'Hypertension'],
-    avgOpdWaitTimeMins: 14,
-    topSpecialtiesInDemand: ['Cardiology', 'General OPD', 'Gynecology']
+// Area Health Statistics Data grouped by City
+const MULTI_CITY_AREA_STATS = {
+  'Jhansi, UP': {
+    'Civil Lines (Jhansi)': {
+      locality: 'Civil Lines (Jhansi)',
+      totalBeds: 730,
+      availableBeds: 103,
+      availableICUs: 18,
+      activeSurgeFactor: 'Normal',
+      aqiLevel: 145,
+      dominantSymptoms: ['High Fever (Dengue/Viral)', 'Chest Tightness'],
+      avgOpdWaitTimeMins: 14,
+      topSpecialtiesInDemand: ['Cardiology', 'General OPD', 'Gynecology']
+    },
+    'Medical College Zone (Jhansi)': {
+      locality: 'Medical College Zone (Jhansi)',
+      totalBeds: 750,
+      availableBeds: 42,
+      availableICUs: 8,
+      activeSurgeFactor: 'High Inflow (Referral Surge)',
+      aqiLevel: 155,
+      dominantSymptoms: ['Accidental Trauma / Fractures', 'Severe Respiratory Distress'],
+      avgOpdWaitTimeMins: 15,
+      topSpecialtiesInDemand: ['Emergency', 'Orthopedics', 'Pulmonology']
+    }
   },
-  'Medical College Zone (Jhansi)': {
-    locality: 'Medical College Zone (Jhansi)',
-    totalBeds: 750,
-    availableBeds: 42,
-    availableICUs: 8,
-    activeSurgeFactor: 'High Inflow (Referral Surge)',
-    aqiLevel: 155,
-    dominantSymptoms: ['Accidental Trauma / Fractures', 'Severe Respiratory Distress', 'Emergency ICU Cases'],
-    avgOpdWaitTimeMins: 15,
-    topSpecialtiesInDemand: ['Emergency', 'Orthopedics', 'Pulmonology', 'Neurology']
+  'Kanpur, UP': {
+    'Swaroop Nagar (Kanpur)': {
+      locality: 'Swaroop Nagar (Kanpur)',
+      totalBeds: 850,
+      availableBeds: 58,
+      availableICUs: 14,
+      activeSurgeFactor: 'Moderate',
+      aqiLevel: 210,
+      dominantSymptoms: ['Respiratory Distress', 'High Fever'],
+      avgOpdWaitTimeMins: 20,
+      topSpecialtiesInDemand: ['Pulmonology', 'Cardiology']
+    }
   },
-  'SIPRI Bazar (Jhansi)': {
-    locality: 'SIPRI Bazar (Jhansi)',
-    totalBeds: 180,
-    availableBeds: 30,
-    availableICUs: 5,
-    activeSurgeFactor: 'Moderate',
-    aqiLevel: 140,
-    dominantSymptoms: ['Bone Injuries', 'Viral Fever', 'Gastrointestinal Pain'],
-    avgOpdWaitTimeMins: 12,
-    topSpecialtiesInDemand: ['Orthopedics', 'Trauma Care']
+  'Lucknow, UP': {
+    'Chowk (Lucknow)': {
+      locality: 'Chowk (Lucknow)',
+      totalBeds: 1200,
+      availableBeds: 85,
+      availableICUs: 22,
+      activeSurgeFactor: 'High Load',
+      aqiLevel: 190,
+      dominantSymptoms: ['Cardiology Emergencies', 'Trauma'],
+      avgOpdWaitTimeMins: 25,
+      topSpecialtiesInDemand: ['Cardiology', 'Neurology']
+    }
   },
-  'Gwalior Road (Jhansi)': {
-    locality: 'Gwalior Road (Jhansi)',
-    totalBeds: 220,
-    availableBeds: 45,
-    availableICUs: 9,
-    activeSurgeFactor: 'Normal',
-    aqiLevel: 138,
-    dominantSymptoms: ['Chest Pain / BP', 'Asthma Cough'],
-    avgOpdWaitTimeMins: 8,
-    topSpecialtiesInDemand: ['Cardiology', 'Pulmonology']
+  'Agra, UP': {
+    'Moti Katra (Agra)': {
+      locality: 'Moti Katra (Agra)',
+      totalBeds: 650,
+      availableBeds: 45,
+      availableICUs: 9,
+      activeSurgeFactor: 'Normal',
+      aqiLevel: 180,
+      dominantSymptoms: ['Viral Fever', 'Fractures'],
+      avgOpdWaitTimeMins: 18,
+      topSpecialtiesInDemand: ['Orthopedics', 'Emergency']
+    }
+  },
+  'Gwalior, MP': {
+    'Lashkar (Gwalior)': {
+      locality: 'Lashkar (Gwalior)',
+      totalBeds: 800,
+      availableBeds: 50,
+      availableICUs: 11,
+      activeSurgeFactor: 'Moderate',
+      aqiLevel: 160,
+      dominantSymptoms: ['Chest Pain', 'Trauma'],
+      avgOpdWaitTimeMins: 16,
+      topSpecialtiesInDemand: ['Cardiology', 'Emergency']
+    }
+  },
+  'Delhi NCR': {
+    'South Delhi': {
+      locality: 'South Delhi',
+      totalBeds: 1500,
+      availableBeds: 35,
+      availableICUs: 5,
+      activeSurgeFactor: 'Severe Surge',
+      aqiLevel: 260,
+      dominantSymptoms: ['Respiratory Asthma', 'Cardiology Surge'],
+      avgOpdWaitTimeMins: 25,
+      topSpecialtiesInDemand: ['Pulmonology', 'Cardiology']
+    }
   }
 };
 
-// Central City API Feed
+// Central City API Feed with City Filter
 async function getCityWideFeed(req, res) {
   try {
+    const { city = 'Jhansi, UP' } = req.query;
     const liveHosp001 = await Hospital.findOne({ hospitalId: 'HOSP-001' });
-    let hospList = [...CITY_HOSPITALS_SEED];
 
-    if (liveHosp001) {
+    let hospList = ALL_CITIES_HOSPITALS_SEED.filter(h => h.city === city || h.city.includes(city.split(',')[0]));
+    if (hospList.length === 0) hospList = ALL_CITIES_HOSPITALS_SEED.filter(h => h.city === 'Jhansi, UP');
+
+    if (liveHosp001 && city.includes('Jhansi')) {
       const freeBeds = liveHosp001.beds.filter(b => b.status === 'AVAILABLE').length;
       const freeICU = liveHosp001.beds.filter(b => b.category === 'ICU' && b.status === 'AVAILABLE').length;
       const freeVentilators = liveHosp001.beds.filter(b => b.category === 'VENTILATOR' && b.status === 'AVAILABLE').length;
@@ -314,6 +442,7 @@ async function getCityWideFeed(req, res) {
     }
 
     const citySummary = {
+      selectedCity: city,
       totalHospitals: hospList.length,
       totalFreeBeds: hospList.reduce((acc, h) => acc + h.freeBeds, 0),
       totalFreeICU: hospList.reduce((acc, h) => acc + h.freeICU, 0),
@@ -327,27 +456,32 @@ async function getCityWideFeed(req, res) {
   }
 }
 
-// Get Health Statistics by Area / Locality in Jhansi
+// Get Health Statistics by City & Area
 async function getAreaStats(req, res) {
   try {
-    const { area = 'Civil Lines (Jhansi)' } = req.query;
-    const stats = AREA_STATS[area] || AREA_STATS['Civil Lines (Jhansi)'];
-    res.json({ success: true, area: stats, availableAreas: Object.keys(AREA_STATS) });
+    const { city = 'Jhansi, UP', area = '' } = req.query;
+    const cityStats = MULTI_CITY_AREA_STATS[city] || MULTI_CITY_AREA_STATS['Jhansi, UP'];
+    const availableAreas = Object.keys(cityStats);
+    const targetArea = area && cityStats[area] ? area : availableAreas[0];
+    const stats = cityStats[targetArea];
+
+    res.json({ success: true, selectedCity: city, area: stats, availableAreas });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
 }
 
-// Filter Hospitals & Specialists by Symptoms, Doctor Name, or Specialist Title
+// Filter Hospitals & Specialists by City, Symptoms, Doctor Name, or Specialist Title
 async function filterHospitalsBySymptoms(req, res) {
   try {
-    const { symptom = '', area = '', doctorName = '', specialistType = '' } = req.query;
+    const { city = 'Jhansi, UP', symptom = '', area = '', doctorName = '', specialistType = '' } = req.query;
 
     const symLower = symptom.toLowerCase().trim();
     const docLower = doctorName.toLowerCase().trim();
     const specLower = specialistType.toLowerCase().trim();
 
-    let matches = CITY_HOSPITALS_SEED;
+    let matches = ALL_CITIES_HOSPITALS_SEED.filter(h => h.city === city || h.city.includes(city.split(',')[0]));
+    if (matches.length === 0) matches = ALL_CITIES_HOSPITALS_SEED.filter(h => h.city === 'Jhansi, UP');
 
     if (area) {
       matches = matches.filter(h => h.area === area);
@@ -402,7 +536,7 @@ async function filterHospitalsBySymptoms(req, res) {
       };
     }).filter(h => (docLower || specLower || symLower) ? h.hasMatch : true);
 
-    res.json({ success: true, count: filteredResults.length, hospitals: filteredResults });
+    res.json({ success: true, selectedCity: city, count: filteredResults.length, hospitals: filteredResults });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -465,12 +599,14 @@ async function reserveAmbulanceBed(req, res) {
   }
 }
 
-// Disaster Redistribution Algorithm for Jhansi Emergency Network
+// Disaster Redistribution Algorithm
 async function triggerDisasterRedistribution(req, res) {
   try {
-    const { incidentLocation = 'Elite Crossing / Kanpur Highway Junction, Jhansi', totalCasulties = 25 } = req.body;
+    const { incidentLocation = 'Highway Junction', totalCasulties = 25, city = 'Jhansi, UP' } = req.body;
 
-    const feed = CITY_HOSPITALS_SEED;
+    let feed = ALL_CITIES_HOSPITALS_SEED.filter(h => h.city === city || h.city.includes(city.split(',')[0]));
+    if (feed.length === 0) feed = ALL_CITIES_HOSPITALS_SEED.filter(h => h.city === 'Jhansi, UP');
+
     let totalFree = feed.reduce((acc, h) => acc + h.freeBeds, 0);
 
     const redistributionPlan = feed.map(hosp => {

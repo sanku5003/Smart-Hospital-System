@@ -2,30 +2,36 @@ import React, { useState, useEffect } from 'react';
 import { MapPin, Activity, AlertTriangle, Wind, ShieldCheck, Stethoscope, Users, Building2 } from 'lucide-react';
 import { apiRequest } from '../utils/api';
 
-export default function AreaHealthDashboard() {
-  const [selectedArea, setSelectedArea] = useState('Civil Lines (Jhansi)');
+export default function AreaHealthDashboard({ selectedCity = 'Jhansi, UP' }) {
+  const [selectedArea, setSelectedArea] = useState('');
   const [areaData, setAreaData] = useState(null);
-  const [availableAreas, setAvailableAreas] = useState([
-    'Civil Lines (Jhansi)',
-    'Medical College Zone (Jhansi)',
-    'SIPRI Bazar (Jhansi)',
-    'Gwalior Road (Jhansi)'
-  ]);
+  const [availableAreas, setAvailableAreas] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const fetchAreaStats = async (areaName) => {
     setLoading(true);
-    const res = await apiRequest(`/city/area-stats?area=${encodeURIComponent(areaName)}`);
+    const query = `/city/area-stats?city=${encodeURIComponent(selectedCity)}${areaName ? `&area=${encodeURIComponent(areaName)}` : ''}`;
+    const res = await apiRequest(query);
     if (res.success) {
       setAreaData(res.area);
-      if (res.availableAreas) setAvailableAreas(res.availableAreas);
+      if (res.availableAreas) {
+        setAvailableAreas(res.availableAreas);
+        if (!areaName && res.availableAreas.length > 0) {
+          setSelectedArea(res.availableAreas[0]);
+        }
+      }
     }
     setLoading(false);
   };
 
   useEffect(() => {
-    fetchAreaStats(selectedArea);
-  }, [selectedArea]);
+    fetchAreaStats('');
+  }, [selectedCity]);
+
+  const handleAreaChange = (newArea) => {
+    setSelectedArea(newArea);
+    fetchAreaStats(newArea);
+  };
 
   return (
     <div className="space-y-6">
@@ -35,21 +41,21 @@ export default function AreaHealthDashboard() {
           <div>
             <div className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-teal-500/10 text-teal-300 border border-teal-500/30 text-xs font-semibold mb-2">
               <MapPin className="w-3.5 h-3.5 text-teal-400" />
-              <span>Jhansi Locality Health Intelligence</span>
+              <span>{selectedCity} Locality Health Intelligence</span>
             </div>
             <h2 className="text-xl font-bold font-heading text-white">
-              Area Health Statistics & Active Disease Trends (Jhansi, UP)
+              Area Health Statistics & Active Disease Trends ({selectedCity})
             </h2>
             <p className="text-xs text-slate-400">
-              Real-time hospital capacity, active disease trends, air quality index (AQI), and OPD wait times across living localities in Jhansi, Uttar Pradesh.
+              Real-time hospital capacity, active disease trends, air quality index (AQI), and OPD wait times across living localities in {selectedCity}.
             </p>
           </div>
 
           <div className="flex items-center space-x-2">
-            <span className="text-xs text-slate-300 font-semibold">Select Jhansi Locality:</span>
+            <span className="text-xs text-slate-300 font-semibold">Select Locality:</span>
             <select
               value={selectedArea}
-              onChange={(e) => setSelectedArea(e.target.value)}
+              onChange={(e) => handleAreaChange(e.target.value)}
               className="px-3.5 py-2 bg-darkbg border border-darkborder rounded-xl text-xs text-slate-200 font-bold focus:outline-none focus:border-teal-500"
             >
               {availableAreas.map((area) => (
@@ -60,7 +66,7 @@ export default function AreaHealthDashboard() {
         </div>
 
         {loading || !areaData ? (
-          <div className="p-8 text-center text-slate-400 text-sm">Loading Locality Statistics for Jhansi...</div>
+          <div className="p-8 text-center text-slate-400 text-sm">Loading Locality Statistics for {selectedCity}...</div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="p-4 rounded-xl bg-darkbg border border-darkborder">
@@ -78,13 +84,13 @@ export default function AreaHealthDashboard() {
             <div className="p-4 rounded-xl bg-darkbg border border-darkborder">
               <span className="text-xs text-slate-400 font-semibold">Locality AQI Index</span>
               <div className="text-2xl font-bold text-cyan-300 mt-1">{areaData.aqiLevel} AQI</div>
-              <p className="text-[11px] text-emerald-400/80 font-medium">Moderate Air Quality</p>
+              <p className="text-[11px] text-emerald-400/80 font-medium">Air Quality Monitor</p>
             </div>
 
             <div className="p-4 rounded-xl bg-darkbg border border-darkborder">
               <span className="text-xs text-slate-400 font-semibold">Avg OPD Wait Time</span>
               <div className="text-2xl font-bold text-teal-400 mt-1">~{areaData.avgOpdWaitTimeMins} Mins</div>
-              <p className="text-[11px] text-slate-500">Across local hospitals in Jhansi</p>
+              <p className="text-[11px] text-slate-500">Across local hospitals</p>
             </div>
           </div>
         )}

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Stethoscope, Search, Building2, MapPin, CheckCircle2, Bed, Clock, Phone, AlertCircle, Calendar, UserCheck, User } from 'lucide-react';
 import { apiRequest } from '../utils/api';
 
-export default function SymptomHospitalFilter() {
+export default function SymptomHospitalFilter({ selectedCity = 'Jhansi, UP' }) {
   const [doctorNameInput, setDoctorNameInput] = useState('');
   const [specialistTypeInput, setSpecialistTypeInput] = useState('');
   const [selectedSymptom, setSelectedSymptom] = useState('chest pain');
@@ -22,7 +22,7 @@ export default function SymptomHospitalFilter() {
 
   const fetchFilteredHospitals = async () => {
     setLoading(true);
-    const query = `/city/filter-by-symptoms?doctorName=${encodeURIComponent(doctorNameInput)}&specialistType=${encodeURIComponent(specialistTypeInput)}&symptom=${encodeURIComponent(selectedSymptom)}&area=${encodeURIComponent(selectedArea)}`;
+    const query = `/city/filter-by-symptoms?city=${encodeURIComponent(selectedCity)}&doctorName=${encodeURIComponent(doctorNameInput)}&specialistType=${encodeURIComponent(specialistTypeInput)}&symptom=${encodeURIComponent(selectedSymptom)}&area=${encodeURIComponent(selectedArea)}`;
     const res = await apiRequest(query);
     if (res.success) {
       setHospitals(res.hospitals || []);
@@ -32,7 +32,7 @@ export default function SymptomHospitalFilter() {
 
   useEffect(() => {
     fetchFilteredHospitals();
-  }, [doctorNameInput, specialistTypeInput, selectedSymptom, selectedArea]);
+  }, [selectedCity, doctorNameInput, specialistTypeInput, selectedSymptom, selectedArea]);
 
   const handleBookDoctorToken = (docName, hospitalName, timing, room) => {
     setBookingSuccess(`Token Reserved with ${docName} at ${hospitalName}! Shift Hours: ${timing} (${room})`);
@@ -46,13 +46,13 @@ export default function SymptomHospitalFilter() {
         <div>
           <div className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-teal-500/10 text-teal-300 border border-teal-500/30 text-xs font-semibold mb-2">
             <Stethoscope className="w-3.5 h-3.5 text-teal-400" />
-            <span>Jhansi Doctor & Specialist Direct Consultation Finder</span>
+            <span>{selectedCity} Doctor & Specialist Direct Consultation Finder</span>
           </div>
           <h2 className="text-xl font-bold font-heading text-white">
-            Search Doctors & Specialists in Jhansi, UP (Live Shift Hours & Availability)
+            Search Doctors & Specialists in {selectedCity} (Live Shift Hours & Availability)
           </h2>
           <p className="text-xs text-slate-400">
-            Search for doctors across Jhansi hospitals (MLB Medical College, District Hospital, St. Jude's, Nirmal, Sudha) by name, specialty, or symptoms.
+            Search for doctors across hospitals in {selectedCity} by name, specialty, or symptoms.
           </p>
         </div>
 
@@ -75,14 +75,14 @@ export default function SymptomHospitalFilter() {
             <div className="relative">
               <input
                 type="text"
-                placeholder="e.g. Dr. Prashant Gupta, Dr. Niranjan, Dr. P. K. Jain..."
+                placeholder="e.g. Dr. Prashant Gupta, Dr. Niranjan..."
                 value={doctorNameInput}
                 onChange={(e) => setDoctorNameInput(e.target.value)}
                 className="w-full pl-9 pr-3.5 py-2.5 bg-slate-900 border border-darkborder rounded-xl text-xs text-white focus:outline-none focus:border-teal-400 font-semibold"
               />
               <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
             </div>
-            <p className="text-[11px] text-slate-400 mt-1">Direct search for specific physician in Jhansi</p>
+            <p className="text-[11px] text-slate-400 mt-1">Direct search for specific physician in {selectedCity}</p>
           </div>
 
           {/* Column 2: Specialist Title Input */}
@@ -125,47 +125,30 @@ export default function SymptomHospitalFilter() {
           </div>
         </div>
 
-        {/* Additional Filters: Symptom & Locality */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-darkborder/60">
-          <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">Optional Symptom Filter</label>
-            <input
-              type="text"
-              placeholder="e.g. Chest pain, Fracture, Fever..."
-              value={selectedSymptom}
-              onChange={(e) => setSelectedSymptom(e.target.value)}
-              className="w-full px-3.5 py-2 bg-darkbg border border-darkborder rounded-xl text-xs text-slate-200 focus:outline-none focus:border-teal-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">Filter by Jhansi Locality</label>
-            <select
-              value={selectedArea}
-              onChange={(e) => setSelectedArea(e.target.value)}
-              className="w-full px-3.5 py-2 bg-darkbg border border-darkborder rounded-xl text-xs text-slate-200 focus:outline-none focus:border-teal-500"
-            >
-              <option value="">All Jhansi Localities</option>
-              <option value="Civil Lines (Jhansi)">Civil Lines (Jhansi)</option>
-              <option value="Medical College Zone (Jhansi)">Medical College Zone (Jhansi)</option>
-              <option value="SIPRI Bazar (Jhansi)">SIPRI Bazar (Jhansi)</option>
-              <option value="Gwalior Road (Jhansi)">Gwalior Road (Jhansi)</option>
-            </select>
-          </div>
+        {/* Additional Filters: Symptom */}
+        <div className="pt-2 border-t border-darkborder/60">
+          <label className="block text-xs font-medium text-slate-300 mb-1">Optional Symptom Filter</label>
+          <input
+            type="text"
+            placeholder="e.g. Chest pain, Fracture, Fever..."
+            value={selectedSymptom}
+            onChange={(e) => setSelectedSymptom(e.target.value)}
+            className="w-full px-3.5 py-2 bg-darkbg border border-darkborder rounded-xl text-xs text-slate-200 focus:outline-none focus:border-teal-500"
+          />
         </div>
       </div>
 
       {/* Doctor & Hospital Search Results List */}
       <div className="space-y-4">
         <h3 className="text-sm font-bold uppercase tracking-wider text-slate-400">
-          Matching Hospitals & Doctor Availability in Jhansi ({hospitals.length})
+          Matching Hospitals & Doctor Availability in {selectedCity} ({hospitals.length})
         </h3>
 
         {loading ? (
-          <div className="p-8 text-center text-slate-400 text-sm">Searching doctors & shift availability in Jhansi...</div>
+          <div className="p-8 text-center text-slate-400 text-sm">Searching doctors & shift availability in {selectedCity}...</div>
         ) : hospitals.length === 0 ? (
           <div className="glass-panel p-8 rounded-2xl text-center text-slate-400 text-sm">
-            No matching doctors or specialists found for entered criteria in Jhansi.
+            No matching doctors or specialists found for entered criteria in {selectedCity}.
           </div>
         ) : (
           <div className="space-y-6">

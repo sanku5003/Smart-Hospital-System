@@ -1,4 +1,6 @@
-const API_BASE = '/api/v1';
+const API_BASE = import.meta.env.VITE_API_BASE_URL
+  ? `${import.meta.env.VITE_API_BASE_URL}/api/v1`
+  : '/api/v1';
 
 export async function apiRequest(endpoint, method = 'GET', body = null) {
   const options = {

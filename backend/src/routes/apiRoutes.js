@@ -27,6 +27,31 @@ const {
   getPredictions
 } = require('../controllers/cityController');
 
+const {
+  superAdminLogin,
+  hospitalLogin,
+  cmoLogin,
+  verifyJwtToken
+} = require('../controllers/authController');
+
+const {
+  getSystemOverview,
+  provisionCmo,
+  provisionHospitalProfile,
+  provisionMitra
+} = require('../controllers/adminController');
+
+// Auth Routes
+router.post('/auth/superadmin-login', superAdminLogin);
+router.post('/auth/hospital-login', hospitalLogin);
+router.post('/auth/cmo-login', cmoLogin);
+
+// Super Admin Provisioning Routes (JWT Protected)
+router.get('/admin/system-stats', getSystemOverview);
+router.post('/admin/provision-cmo', verifyJwtToken, provisionCmo);
+router.post('/admin/provision-hospital', verifyJwtToken, provisionHospitalProfile);
+router.post('/admin/provision-mitra', verifyJwtToken, provisionMitra);
+
 // Patient & Token Routes
 router.post('/tokens/triage', createToken);
 router.post('/tokens/checkin', checkInToken);

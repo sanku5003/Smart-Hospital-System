@@ -2,14 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { MapPin, Building2, Bed, Activity, Phone, ShieldCheck, Ambulance, AlertTriangle } from 'lucide-react';
 import { apiRequest } from '../utils/api';
 
-export default function CityMap({ onOpenAmbulanceModal, onOpenDisasterModal }) {
+export default function CityMap({ selectedCity = 'Jhansi, UP', onOpenAmbulanceModal, onOpenDisasterModal }) {
   const [cityData, setCityData] = useState(null);
   const [selectedHospital, setSelectedHospital] = useState(null);
   const [loading, setLoading] = useState(true);
 
   const fetchCityFeed = async () => {
     setLoading(true);
-    const res = await apiRequest('/city/feed');
+    const res = await apiRequest(`/city/feed?city=${encodeURIComponent(selectedCity)}`);
     if (res.success) {
       setCityData(res);
       if (res.hospitals && res.hospitals.length > 0) {
@@ -21,7 +21,7 @@ export default function CityMap({ onOpenAmbulanceModal, onOpenDisasterModal }) {
 
   useEffect(() => {
     fetchCityFeed();
-  }, []);
+  }, [selectedCity]);
 
   return (
     <div className="space-y-6">
@@ -31,13 +31,13 @@ export default function CityMap({ onOpenAmbulanceModal, onOpenDisasterModal }) {
           <div>
             <div className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-cyan-500/10 text-cyan-300 border border-cyan-500/30 text-xs font-semibold mb-2">
               <MapPin className="w-3.5 h-3.5 text-cyan-400" />
-              <span>Jhansi City Health Network (Uttar Pradesh)</span>
+              <span>{selectedCity} Health Network Stream</span>
             </div>
             <h2 className="text-xl font-bold font-heading text-white">
-              Centralized Jhansi Hospital Capacity & Bed Availability Stream
+              Centralized Hospital Capacity & Bed Availability Stream ({selectedCity})
             </h2>
             <p className="text-xs text-slate-400">
-              Aggregated real-time stream covering MLB Medical College, District Hospital, St. Jude's, Nirmal Trauma Center, and Sudha Heart Institute in Jhansi, UP.
+              Aggregated real-time stream covering all connected medical facilities and emergency beds in {selectedCity}.
             </p>
           </div>
 
@@ -47,7 +47,7 @@ export default function CityMap({ onOpenAmbulanceModal, onOpenDisasterModal }) {
               className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-darkbg font-bold rounded-xl text-xs flex items-center space-x-1.5 transition shadow-lg shadow-emerald-500/20"
             >
               <Ambulance className="w-4 h-4" />
-              <span>Jhansi 108 Ambulance Reserve</span>
+              <span>108 Ambulance Bed Reserve</span>
             </button>
             <button
               onClick={onOpenDisasterModal}
@@ -62,7 +62,7 @@ export default function CityMap({ onOpenAmbulanceModal, onOpenDisasterModal }) {
         {cityData?.summary && (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div className="p-3.5 rounded-xl bg-darkbg border border-darkborder">
-              <span className="text-xs text-slate-400 font-semibold">Jhansi Hospitals</span>
+              <span className="text-xs text-slate-400 font-semibold">{selectedCity} Hospitals</span>
               <div className="text-xl font-bold text-white mt-0.5">{cityData.summary.totalHospitals} Facilities</div>
             </div>
             <div className="p-3.5 rounded-xl bg-darkbg border border-darkborder">
@@ -86,11 +86,11 @@ export default function CityMap({ onOpenAmbulanceModal, onOpenDisasterModal }) {
         {/* Hospitals Directory List */}
         <div className="lg:col-span-5 space-y-3">
           <h3 className="text-sm font-bold uppercase tracking-wider text-slate-400 mb-2">
-            Connected Jhansi Hospitals ({cityData?.hospitals?.length || 0})
+            Connected Hospitals in {selectedCity} ({cityData?.hospitals?.length || 0})
           </h3>
 
           {loading ? (
-            <div className="p-6 text-center text-slate-400 text-sm">Loading Jhansi Stream...</div>
+            <div className="p-6 text-center text-slate-400 text-sm">Loading {selectedCity} Stream...</div>
           ) : (
             cityData?.hospitals?.map((hosp) => (
               <div
@@ -153,7 +153,6 @@ export default function CityMap({ onOpenAmbulanceModal, onOpenDisasterModal }) {
                 </div>
               </div>
 
-              {/* Detailed Live Indicators */}
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 <div className="p-3.5 rounded-xl bg-darkbg border border-darkborder">
                   <span className="text-xs text-slate-400">Total Bed Capacity</span>
@@ -181,7 +180,6 @@ export default function CityMap({ onOpenAmbulanceModal, onOpenDisasterModal }) {
                 </div>
               </div>
 
-              {/* Quick Action Button */}
               <div className="pt-2">
                 <button
                   onClick={onOpenAmbulanceModal}

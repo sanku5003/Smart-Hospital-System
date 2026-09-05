@@ -8,19 +8,21 @@ export const SocketProvider = ({ children }) => {
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
-    // Connect to backend Socket.IO server
-    const newSocket = io('http://localhost:5000', {
+    // Dynamic Socket URL for local & cloud production deployments
+    const socketUrl = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
+
+    const newSocket = io(socketUrl, {
       transports: ['websocket', 'polling']
     });
 
     newSocket.on('connect', () => {
-      console.log('⚡ Connected to Socket.IO Server');
+      console.log('⚡ Connected to Realtime Socket Server');
       setIsConnected(true);
       newSocket.emit('join-hospital-room', 'HOSP-001');
     });
 
     newSocket.on('disconnect', () => {
-      console.log('❌ Disconnected from Socket.IO Server');
+      console.log('❌ Disconnected from Socket Server');
       setIsConnected(false);
     });
 
